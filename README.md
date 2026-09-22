@@ -61,7 +61,7 @@ The goal of this project is to create a portfolio that feels like an experience 
 
 ## 🎥 Demo Video
 
-/* */
+👉 .[Click here](https://lnkd.in/p/dWTi2yV8)
 
 ## 🔗 Live Demo
 
