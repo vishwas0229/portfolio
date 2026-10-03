@@ -2,6 +2,8 @@ const $=id=>document.getElementById(id);
 let csrfToken="";
 let projects=[];
 let certificates=[];
+let sessionTimerHandle=null;
+let sessionExpiresAtMs=0;
 
 function esc(value){return String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function fmtDate(value){try{return new Date(value).toLocaleString()}catch(_){return String(value||"")}}
@@ -34,7 +36,7 @@ async function api(path,options={}){
     clearTimeout(timeoutId);
   }
 }
-function showLogin(){$("appView").hidden=true;$("loginView").hidden=false;csrfToken=""}
+function showLogin(message=""){clearSessionTimer();$("appView").hidden=true;$("loginView").hidden=false;csrfToken="";if(message){$("loginStatus").textContent=message;$("loginStatus").className="status status-info"}}
 function showApp(user){
   $("loginView").hidden=true;
   $("appView").hidden=false;
@@ -42,9 +44,50 @@ function showApp(user){
   $("currentUser").textContent=email;
   $("sidebarUser").textContent=email;
 }
-async function loadSession(){try{const d=await api("/api/admin/session");if(d.authenticated){csrfToken=d.csrfToken;showApp(d.user);await Promise.allSettled([loadMessages(),loadProjects(),loadCertificates(),loadAnalytics()]);return true}}catch(_){}showLogin();return false}
+async function loadSession(){try{const d=await api("/api/admin/session");if(d.authenticated){csrfToken=d.csrfToken;showApp(d.user);startSessionTimer(d.expiresAt);await Promise.allSettled([loadMessages(),loadProjects(),loadCertificates(),loadAnalytics()]);return true}}catch(_){}showLogin();return false}
 
 async function loadAccount(){try{const d=await api("/api/admin/account");const account=d.data||{};$("accountEmail").value=account.email||"";$("accountStatus").textContent=""}catch(err){$("accountStatus").textContent=err.message}}
+
+function formatSessionTime(ms){
+  const total=Math.max(0,Math.ceil(ms/1000));
+  const hours=Math.floor(total/3600);
+  const minutes=Math.floor((total%3600)/60);
+  const seconds=total%60;
+  if(hours>0)return hours+"h "+String(minutes).padStart(2,"0")+"m";
+  return minutes+"m "+String(seconds).padStart(2,"0")+"s";
+}
+
+function clearSessionTimer(){
+  if(sessionTimerHandle)clearInterval(sessionTimerHandle);
+  sessionTimerHandle=null;
+  sessionExpiresAtMs=0;
+  const status=$("sessionStatus");
+  if(status)status.classList.remove("session-warning");
+}
+
+async function expireSession(){
+  clearSessionTimer();
+  try{await fetch("/api/admin/logout",{method:"POST",credentials:"include"});}catch(_){}
+  showLogin("Your admin session has expired. Please sign in again.");
+}
+
+function startSessionTimer(expiresAt){
+  clearSessionTimer();
+  const expiry=typeof expiresAt==="number" ? expiresAt : new Date(expiresAt).getTime();
+  if(!Number.isFinite(expiry)||expiry<=Date.now())return expireSession();
+  sessionExpiresAtMs=expiry;
+  const tick=()=>{
+    const remaining=sessionExpiresAtMs-Date.now();
+    const timer=$("sessionTimer");
+    const status=$("sessionStatus");
+    if(!timer||!status)return;
+    if(remaining<=0)return expireSession();
+    timer.textContent="Session "+formatSessionTime(remaining);
+    status.classList.toggle("session-warning",remaining<=5*60*1000);
+  };
+  tick();
+  sessionTimerHandle=setInterval(tick,1000);
+}
 
 let loginCooldownTimer=null;
 function formatCooldown(seconds){
@@ -82,6 +125,7 @@ $("loginForm").addEventListener("submit",async e=>{
     const d=await api("/api/admin/login",{method:"POST",body:JSON.stringify({email:$("loginEmail").value,password:$("loginPassword").value})});
     csrfToken=d.csrfToken||"";
     showApp(d.user);
+    startSessionTimer(Date.now()+Number(d.expiresIn||0)*1000);
     $("loginPassword").value="";
     $("loginStatus").textContent="";
     $("loginStatus").className="status";
@@ -165,6 +209,7 @@ $("accountForm").addEventListener("submit",async e=>{
     })});
     if(d.csrfToken)csrfToken=d.csrfToken;
     if(d.data)showApp(d.data);
+    if(d.expiresIn)startSessionTimer(Date.now()+Number(d.expiresIn)*1000);
     $("currentPassword").value="";
     $("newPassword").value="";
     $("confirmPassword").value="";
