@@ -40,7 +40,7 @@ jobs:
         run: |
           code=$(curl --silent --output /tmp/admin-login.json --write-out "%{http_code}"             -H "Origin: http://localhost:8888"             -H "Content-Type: application/json"             -d '{"email":"admin@localhost","password":"Admin@12345678"}'             http://127.0.0.1:8888/api/admin/login)
           test "$code" = "200"
-          grep -q '"authenticated":true' /tmp/admin-login.json
+          grep -q '"ok":true' /tmp/admin-login.json
       - name: Verify feedback persistence
         run: |
           code=$(curl --silent --output /tmp/feedback.json --write-out "%{http_code}"             -H "Content-Type: application/json"             -d '{"name":"CI Test","email":"ci@example.com","subject":"Portfolio feedback","message":"Hello","pageUrl":"http://127.0.0.1:8888/"}'             http://127.0.0.1:8888/api/contact)
