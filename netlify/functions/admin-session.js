@@ -22,6 +22,7 @@ exports.handler = async (event) => {
     authenticated: true,
     user: { email: session.sub, role: session.role },
     expiresAt: new Date(session.exp * 1000).toISOString(),
+    sessionVersion: session.sessionVersion,
     csrfToken: session.csrf
   }, event, { "cache-control": "no-store" });
 };
