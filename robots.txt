@@ -1,4 +1,1 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://github.com/vishwas0229sitemap.xml
+Sitemap: https://portfolio.postlyfi.in/sitemap.xml
