@@ -6,7 +6,6 @@
     "node": ">=20"
   },
   "dependencies": {
-    "nodemailer": "10.0.13",
     "mysql2": "3.24.4"
   },
   "scripts": {
