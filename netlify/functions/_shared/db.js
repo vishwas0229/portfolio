@@ -23,6 +23,7 @@ async function request(path, { method = "GET", body, query = "" } = {}) {
         apikey: key,
         authorization: `Bearer ${key}`,
         "content-type": "application/json",
+        "prefer": "return=representation",
         accept: "application/json",
         "user-agent": "Rahul-Portfolio/1.0"
       },
