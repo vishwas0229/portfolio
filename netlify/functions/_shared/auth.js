@@ -84,11 +84,11 @@ function buildSession(email) {
 }
 
 function cookie(name, value, maxAge, httpOnly) {
-  return `${name}=${encodeURIComponent(value)}; Path=/; Max-Age=${maxAge}; SameSite=Strict; Secure${httpOnly ? "; HttpOnly" : ""}`;
+  return `${name}=${encodeURIComponent(value)}; Path=/; Max-Age=${maxAge}; SameSite=Strict${config.secureCookies ? "; Secure" : ""}${httpOnly ? "; HttpOnly" : ""}`;
 }
 
 function clearCookie(name) {
-  return `${name}=; Path=/; Max-Age=0; SameSite=Strict; Secure${name === SESSION_COOKIE ? "; HttpOnly" : ""}`;
+  return `${name}=; Path=/; Max-Age=0; SameSite=Strict${config.secureCookies ? "; Secure" : ""}${name === SESSION_COOKIE ? "; HttpOnly" : ""}`;
 }
 
 function createLoginCookies(email) {
