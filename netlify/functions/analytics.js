@@ -44,6 +44,7 @@ exports.handler = async (event) => {
 
     await insert("analytics_events", {
       event_name: name.value,
+      event_date: new Date().toISOString().slice(0, 10),
       section: section.value || null,
       project_slug: project.value || null,
       metadata: compactMetadata
