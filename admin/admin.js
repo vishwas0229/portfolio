@@ -19,6 +19,8 @@ function showLogin(){$("appView").hidden=true;$("loginView").hidden=false;csrfTo
 function showApp(user){$("loginView").hidden=true;$("appView").hidden=false;$("currentUser").textContent=(user&&user.email)||"Admin"}
 async function loadSession(){try{const d=await api("/api/admin/session");if(d.authenticated){csrfToken=d.csrfToken;showApp(d.user);await loadMessages();return true}}catch(_){}showLogin();return false}
 
+async function loadAccount(){try{const d=await api("/api/admin/account");const account=d.data||{};$("accountEmail").value=account.email||"";$("accountStatus").textContent=""}catch(err){$("accountStatus").textContent=err.message}}
+
 $("loginForm").addEventListener("submit",async e=>{e.preventDefault();$("loginStatus").textContent="Signing in…";try{const d=await api("/api/admin/login",{method:"POST",body:JSON.stringify({email:$("loginEmail").value,password:$("loginPassword").value})});const s=await api("/api/admin/session");csrfToken=s.csrfToken;showApp(d.user);$("loginPassword").value="";$("loginStatus").textContent="";await loadMessages()}catch(err){$("loginStatus").textContent=err.message}});
 $("logoutBtn").addEventListener("click",async()=>{try{await api("/api/admin/logout",{method:"POST"})}finally{showLogin()}});
 
@@ -26,7 +28,7 @@ document.querySelectorAll(".tabs button").forEach(btn=>btn.addEventListener("cli
   document.querySelectorAll(".tabs button").forEach(x=>x.classList.toggle("active",x===btn));
   document.querySelectorAll(".tab-panel").forEach(x=>x.hidden=true);
   $(btn.dataset.tab+"Tab").hidden=false;
-  try{if(btn.dataset.tab==="messages")await loadMessages();if(btn.dataset.tab==="projects")await loadProjects();if(btn.dataset.tab==="certificates")await loadCertificates();if(btn.dataset.tab==="analytics")await loadAnalytics()}catch(err){console.error(err)}
+  try{if(btn.dataset.tab==="messages")await loadMessages();if(btn.dataset.tab==="projects")await loadProjects();if(btn.dataset.tab==="certificates")await loadCertificates();if(btn.dataset.tab==="analytics")await loadAnalytics();if(btn.dataset.tab==="account")await loadAccount()}catch(err){console.error(err)}
 }));
 
 async function loadMessages(){try{const d=await api("/api/admin/messages");const rows=d.data||[];$("messagesList").innerHTML=rows.length?rows.map(m=>'<article class="message-card '+(m.status==="new"?"unread":"")+'"><h3>'+esc(m.name)+' <span class="meta">('+esc(m.email)+')</span></h3><div class="meta">'+esc(m.subject||"No subject")+' · '+esc(fmtDate(m.created_at))+' · '+esc(m.status)+'</div><div class="message-text">'+esc(m.message)+'</div><div class="meta">Notification: '+esc(m.email_status||"pending")+'</div><div class="card-actions">'+(m.status!=="read"?'<button class="ghost" onclick="updateMessage(\''+esc(m.id)+'\',\'read\')">Mark read</button>':"")+(m.status!=="archived"?'<button class="ghost" onclick="updateMessage(\''+esc(m.id)+'\',\'archived\')">Archive</button>':"")+(m.status!=="new"?'<button class="ghost" onclick="updateMessage(\''+esc(m.id)+'\',\'new\')">Mark new</button>':"")+'</div></article>').join(""):'<div class="empty">No messages yet.</div>'}catch(err){$("messagesList").innerHTML='<div class="empty">'+esc(err.message)+'</div>'}}
@@ -53,3 +55,29 @@ async function loadAnalytics(){try{const d=await api("/api/admin/analytics?days=
 $("refreshAnalytics").addEventListener("click",loadAnalytics);
 $("analyticsDays").addEventListener("change",loadAnalytics);
 loadSession();
+
+$("accountForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  $("accountStatus").textContent="Updating account…";
+  const newPassword=$("newPassword").value;
+  const confirmPassword=$("confirmPassword").value;
+  if(newPassword && newPassword!==confirmPassword){
+    $("accountStatus").textContent="New passwords do not match.";
+    return;
+  }
+  try{
+    const d=await api("/api/admin/account",{method:"PATCH",csrf:true,body:JSON.stringify({
+      email:$("accountEmail").value,
+      currentPassword:$("currentPassword").value,
+      newPassword:newPassword
+    })});
+    if(d.csrfToken)csrfToken=d.csrfToken;
+    if(d.data)showApp(d.data);
+    $("currentPassword").value="";
+    $("newPassword").value="";
+    $("confirmPassword").value="";
+    $("accountStatus").textContent="Account updated successfully.";
+  }catch(err){
+    $("accountStatus").textContent=err.message;
+  }
+});
