@@ -83,6 +83,10 @@ jobs:
           grep -q '"authenticated":true' /tmp/admin-login.json
           grep -q '"csrfToken":"' /tmp/admin-login.json
           grep -q 'portfolio_admin_session=' /tmp/admin.cookies
+          session_cookie=$(awk '$0 !~ /^#/ && $6 == "portfolio_admin_session" {print $7}' /tmp/admin.cookies)
+          test -n "$session_cookie"
+          decoded=$(docker compose exec -T app node -e 'const {getSession}=require("./netlify/functions/_shared/auth"); const s=getSession({headers:{cookie:"portfolio_admin_session="+process.argv[1]}}); process.stdout.write(s ? "VALID" : "INVALID")' "$session_cookie" | tr -d '\r\n')
+          test "$decoded" = "VALID"
           curl --silent --show-error --fail             -b /tmp/admin.cookies             http://127.0.0.1:8888/api/admin/session > /tmp/admin-session.json
           grep -q '"authenticated":true' /tmp/admin-session.json
 
