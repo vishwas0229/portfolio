@@ -3,12 +3,13 @@ USE portfolio;
 -- Local bootstrap admin. Authentication reads this record from MySQL.
 -- Password: Admin@12345678 (change it before exposing the stack beyond localhost).
 INSERT INTO admins
-  (email, password_hash, role, active)
+  (email, password_hash, role, active, session_version)
 VALUES
-  ('admin@localhost','pbkdf2$sha256$210000$R6ZX5t5mJZPuovaCNoLx_A$9yfNalu_0ZGP8WkEDWKSxfizBinvZVdPNqkHqUV48M0','admin',TRUE)
+  ('admin@localhost','pbkdf2$sha256$210000$R6ZX5t5mJZPuovaCNoLx_A$9yfNalu_0ZGP8WkEDWKSxfizBinvZVdPNqkHqUV48M0','admin',TRUE,1)
 ON DUPLICATE KEY UPDATE
   role = VALUES(role),
-  active = VALUES(active);
+  active = VALUES(active),
+  session_version = 1;
 
 INSERT INTO projects
   (title, slug, summary, description, tech_stack, repository_url, demo_url, featured, display_order, published)
