@@ -1,6 +1,7 @@
 const crypto = require("node:crypto");
 const { getClientIp } = require("./rate-limit");
 const { config } = require("./config");
+const { list } = require("./db");
 
 const SESSION_COOKIE = "portfolio_admin_session";
 const CSRF_COOKIE = "portfolio_admin_csrf";
@@ -102,13 +103,25 @@ function getSession(event) {
   return decode(cookies[SESSION_COOKIE]);
 }
 
-function requireAdmin(event) {
+async function requireAdmin(event) {
   const session = getSession(event);
   if (!session || session.role !== "admin" || !session.sub) {
     const error = new Error("Unauthorized");
     error.statusCode = 401;
     throw error;
   }
+
+  const rows = await list(
+    "admins",
+    `?select=email,role,active&email=eq.${encodeURIComponent(session.sub)}&limit=1`
+  );
+  const admin = Array.isArray(rows) ? rows[0] : null;
+  if (!admin || !Boolean(admin.active) || admin.role !== "admin") {
+    const error = new Error("Unauthorized");
+    error.statusCode = 401;
+    throw error;
+  }
+
   return session;
 }
 
