@@ -42,7 +42,7 @@
         <div class="section-head"><div><h2>Projects</h2><p class="muted">Create and publish portfolio projects without editing HTML.</p></div><button id="newProjectBtn" class="primary">New project</button></div>
         <div id="projectFormWrap" class="panel form-panel" hidden>
           <form id="projectForm">
-            <input id="projectId" type="hidden">
+            <input id="projectId" type="hidden"><input id="projectOriginalSlug" type="hidden">
             <div class="form-grid">
               <label>Title<input id="projectTitle" required maxlength="120"></label>
               <label>Slug<input id="projectSlug" required maxlength="100" pattern="[a-z0-9]+(?:-[a-z0-9]+)*"></label>
