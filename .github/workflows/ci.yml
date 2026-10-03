@@ -1,0 +1,37 @@
+name: Portfolio CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Check JavaScript syntax
+        run: |
+          node --check assets/js/app.js
+          for file in netlify/functions/*.js; do
+            node --check "$file"
+          done
+          for file in netlify/functions/_shared/*.js; do
+            node --check "$file"
+          done
+
+      - name: Run backend tests
+        run: node --test tests/backend-foundation.test.js
+
+      - name: Validate site metadata and deployment files
+        run: node scripts/validate-site.mjs
