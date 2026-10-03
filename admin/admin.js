@@ -80,8 +80,7 @@ $("loginForm").addEventListener("submit",async e=>{
   button.disabled=true;
   try{
     const d=await api("/api/admin/login",{method:"POST",body:JSON.stringify({email:$("#loginEmail").value,password:$("#loginPassword").value})});
-    const s=await api("/api/admin/session");
-    csrfToken=s.csrfToken;
+    csrfToken=d.csrfToken||"";
     showApp(d.user);
     $("#loginPassword").value="";
     $("#loginStatus").textContent="";
