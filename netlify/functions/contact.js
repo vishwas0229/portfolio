@@ -1,8 +1,7 @@
 const { json, options } = require("./_shared/http");
 const { checkRateLimit, getClientIp, rateLimitHeaders } = require("./_shared/rate-limit");
 const { readJsonBody, validateString, validateEmail, isHoneypotFilled } = require("./_shared/validation");
-const { insert, update } = require("./_shared/db");
-const { sendContactNotification } = require("./_shared/mailer");
+const { insert } = require("./_shared/db");
 
 const LIMIT = 5;
 const WINDOW_MS = 60_000;
@@ -54,30 +53,16 @@ exports.handler = async (event) => {
       subject: subject.value,
       message: message.value,
       page_url: pageUrl.value || null,
-      status: "new",
-      email_status: "pending"
+      status: "new"
     });
 
     const row = Array.isArray(saved) ? saved[0] : saved;
     if (!row?.id) throw new Error("Message was not saved");
 
-    let emailStatus = "skipped";
-    try {
-      const mail = await sendContactNotification(row);
-      emailStatus = mail.status;
-    } catch (_) {
-      emailStatus = "failed";
-    }
-
-    await update("contact_messages", `?id=eq.${encodeURIComponent(row.id)}`, {
-      email_status: emailStatus,
-      ...(emailStatus === "failed" ? { email_error: "Notification delivery failed." } : {})
-    }).catch(() => {});
-
     return json(201, {
       ok: true,
       message: "Your message was received.",
-      data: { id: row.id, emailStatus }
+      data: { id: row.id }
     }, event, rateLimitHeaders(limited, LIMIT));
   } catch (error) {
     const status = error?.statusCode === 413 ? 413 : error?.code === "DB_NOT_CONFIGURED" ? 503 : 500;

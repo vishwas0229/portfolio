@@ -111,7 +111,7 @@ The portfolio now includes a serverless Node.js backend on Netlify Functions.
 - `GET /api/health?deep=1` — API + MySQL connectivity/readiness check
 - `GET /api/projects` — published projects
 - `GET /api/certificates` — published certificates
-- `POST /api/contact` — validated contact submission with database persistence and optional SMTP notification
+- `POST /api/contact` — validated contact submission with database persistence; messages are shown in the authenticated Admin Console
 - `POST /api/analytics` — privacy-conscious event ingestion
 - `/api/admin/*` — authenticated admin operations for messages, projects, certificates, analytics and account settings
 
@@ -183,10 +183,11 @@ docker compose down -v
 
 Use `docker compose down -v` only when you intentionally want to delete the local MySQL volume and start with a fresh database.
 
-For an existing MySQL volume created before admin session versioning, run the migration once:
+For an existing MySQL volume created before admin/contact schema changes, run the applicable migration once. The contact cleanup migration removes legacy email-notification columns:
 
 ```bash
 docker compose exec -T db mysql -uportfolio -pportfolio_dev portfolio < docs/mysql-migrate.sql
+docker compose exec -T db mysql -uportfolio -pportfolio_dev portfolio < docs/mysql-contact-migrate.sql
 ```
 
 ### Configuration
@@ -198,7 +199,7 @@ DATABASE_URL=mysql://portfolio:portfolio_dev@db:3306/portfolio
 DB_POOL_MAX=10
 ```
 
-Only infrastructure/security settings such as the MySQL connection, session secret and optional SMTP credentials are configured through `.env`. Admin account credentials are database data.
+Infrastructure/security settings such as the MySQL connection and session secret are configured through `.env`. Admin account credentials and feedback messages are database data.
 
 ### Architecture
 

@@ -63,15 +63,12 @@ CREATE TABLE IF NOT EXISTS contact_messages (
   message TEXT NOT NULL,
   page_url VARCHAR(500) NULL,
   status VARCHAR(12) NOT NULL DEFAULT 'new',
-  email_status VARCHAR(12) NOT NULL DEFAULT 'pending',
-  email_error VARCHAR(500) NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   read_at TIMESTAMP NULL,
   archived_at TIMESTAMP NULL,
   PRIMARY KEY (id),
   KEY contact_messages_status_idx (status, created_at),
-  CONSTRAINT contact_messages_status_chk CHECK (status IN ('new','read','archived')),
-  CONSTRAINT contact_messages_email_status_chk CHECK (email_status IN ('pending','sent','failed','skipped'))
+  CONSTRAINT contact_messages_status_chk CHECK (status IN ('new','read','archived'))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS analytics_events (
