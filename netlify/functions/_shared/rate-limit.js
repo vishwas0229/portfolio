@@ -27,9 +27,9 @@ function checkRateLimit(key, limit = config.apiRateLimitMax, windowMs = config.a
   return { allowed: true, remaining, retryAfter };
 }
 
-function rateLimitHeaders(result) {
+function rateLimitHeaders(result, limit = config.apiRateLimitMax) {
   return {
-    "x-ratelimit-limit": String(config.apiRateLimitMax),
+    "x-ratelimit-limit": String(limit),
     "x-ratelimit-remaining": String(result.remaining),
     "retry-after": String(result.retryAfter)
   };
