@@ -152,6 +152,11 @@ function prepareRecord(table, row) {
   return out;
 }
 
+async function ping() {
+  await getPool().query("SELECT 1 AS ok");
+  return true;
+}
+
 async function list(table, query = "") {
   const parsed = parseQuery(table, query);
   const sql = "SELECT " + parsed.selectSql + " FROM " + table + parsed.whereSql + parsed.orderSql + parsed.limitSql;
@@ -207,4 +212,4 @@ async function remove(table, query) {
   return [{ affectedRows: result.affectedRows }];
 }
 
-module.exports = { config, list, insert, update, remove, getDatabaseUrl, parseQuery };
+module.exports = { config, ping, list, insert, update, remove, getDatabaseUrl, parseQuery };
