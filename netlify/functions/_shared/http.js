@@ -24,9 +24,16 @@ function corsHeaders(event) {
 }
 
 function json(statusCode, body, event, extraHeaders = {}) {
+  const headers = { ...corsHeaders(event), ...extraHeaders };
+  const multiValueHeaders = {};
+  if (Array.isArray(headers["set-cookie"])) {
+    multiValueHeaders["set-cookie"] = headers["set-cookie"];
+    delete headers["set-cookie"];
+  }
   return {
     statusCode,
-    headers: { ...corsHeaders(event), ...extraHeaders },
+    headers,
+    ...(Object.keys(multiValueHeaders).length ? { multiValueHeaders } : {}),
     body: JSON.stringify(body)
   };
 }
