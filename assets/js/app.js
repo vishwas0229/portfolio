@@ -3393,6 +3393,9 @@ window.addEventListener("error", function (event) {
 
       function updateModalFocusState(modal) {
         const open = modalIsOpen(modal);
+        const trigger = document.querySelector('[aria-controls="' + modal.id + '"]');
+        if (trigger) trigger.setAttribute("aria-expanded", open ? "true" : "false");
+
         const state = modalFocusState.get(modal) || { open: false, returnFocus: null };
         if (open && !state.open) {
           state.open = true;
