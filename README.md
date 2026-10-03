@@ -217,3 +217,8 @@ Node local runtime :8888
 ```
 
 The same application backend can point to any reachable MySQL 8.x server by changing `DATABASE_URL`.
+
+
+### Cloudflare Tunnel development
+
+The Docker runtime is proxy-aware for Cloudflare Tunnel development. When HTTPS traffic arrives through Cloudflare, the app accepts the tunnel origin for same-origin admin requests and marks the admin cookies as `Secure`. You do not need to hardcode a temporary tunnel hostname in `CORS_ORIGIN`.
