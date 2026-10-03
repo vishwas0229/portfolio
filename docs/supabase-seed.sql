@@ -88,7 +88,7 @@ values
   (
     'SnapAR Hands-on Augmented Reality Lens Creation Workshop',
     'Arexa & Bharat XR · Snap AR',
-    '2025-10-01',
+    null,
     'Lens Studio workshop.',
     60,
     true
