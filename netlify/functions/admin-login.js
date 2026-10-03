@@ -23,7 +23,7 @@ exports.handler = async (event) => {
 
     const rows = await list(
       "admins",
-      `?select=email,role,password_hash,active&email=eq.${encodeURIComponent(email.value)}&limit=1`
+      `?select=email,role,password_hash,active,session_version&email=eq.${encodeURIComponent(email.value)}&limit=1`
     );
     const admin = Array.isArray(rows) ? rows[0] : null;
     const valid = Boolean(admin) &&
@@ -40,7 +40,7 @@ exports.handler = async (event) => {
       user: { email: admin.email, role: admin.role },
       expiresIn: SESSION_TTL_SECONDS
     }, event, {
-      "set-cookie": createLoginCookies(admin.email),
+      "set-cookie": createLoginCookies(admin.email, admin.session_version),
       "cache-control": "no-store"
     });
   } catch (error) {
