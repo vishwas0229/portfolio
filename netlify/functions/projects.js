@@ -6,6 +6,8 @@ const { requireAdmin, requireSameOrigin, requireCsrf } = require("./_shared/auth
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 function pathId(event) {
+  const queryId = event.queryStringParameters?.slug;
+  if (queryId) return String(queryId).trim();
   const raw = String(event.path || "").split("/").filter(Boolean);
   const marker = raw.indexOf("projects");
   return marker >= 0 ? raw[marker + 1] || null : null;
