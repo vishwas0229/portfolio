@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Rahul Portfolio — Admin</title>
+  <link rel="stylesheet" href="./admin.css">
+</head>
+<body>
+  <main class="admin-shell">
+    <section id="loginView" class="panel auth-panel">
+      <div class="brand">RAHUL / PORTFOLIO</div>
+      <h1>Admin Console</h1>
+      <p class="muted">Sign in to manage messages, projects, certificates and analytics.</p>
+      <form id="loginForm">
+        <label>Email<input id="loginEmail" type="email" autocomplete="username" required maxlength="160"></label>
+        <label>Password<input id="loginPassword" type="password" autocomplete="current-password" required maxlength="200"></label>
+        <button type="submit" class="primary">Sign in</button>
+        <p id="loginStatus" class="status" role="status"></p>
+      </form>
+    </section>
+
+    <section id="appView" hidden>
+      <header class="topbar">
+        <div><div class="brand">RAHUL / PORTFOLIO</div><div id="currentUser" class="muted"></div></div>
+        <button id="logoutBtn" class="ghost">Log out</button>
+      </header>
+      <nav class="tabs" aria-label="Admin sections">
+        <button data-tab="messages" class="active">Messages</button>
+        <button data-tab="projects">Projects</button>
+        <button data-tab="certificates">Certificates</button>
+        <button data-tab="analytics">Analytics</button>
+      </nav>
+
+      <section id="messagesTab" class="tab-panel">
+        <div class="section-head"><div><h2>Messages</h2><p class="muted">Contact submissions stored in the backend.</p></div><button id="refreshMessages" class="ghost">Refresh</button></div>
+        <div id="messagesList" class="stack"><div class="empty">Loading messages…</div></div>
+      </section>
+
+      <section id="projectsTab" class="tab-panel" hidden>
+        <div class="section-head"><div><h2>Projects</h2><p class="muted">Create and publish portfolio projects without editing HTML.</p></div><button id="newProjectBtn" class="primary">New project</button></div>
+        <div id="projectFormWrap" class="panel form-panel" hidden>
+          <form id="projectForm">
+            <input id="projectId" type="hidden">
+            <div class="form-grid">
+              <label>Title<input id="projectTitle" required maxlength="120"></label>
+              <label>Slug<input id="projectSlug" required maxlength="100" pattern="[a-z0-9]+(?:-[a-z0-9]+)*"></label>
+              <label class="wide">Summary<input id="projectSummary" required maxlength="280"></label>
+              <label class="wide">Description<textarea id="projectDescription" maxlength="5000"></textarea></label>
+              <label>Tech stack<input id="projectTech" placeholder="JavaScript, Three.js, GSAP"></label>
+              <label>Display order<input id="projectOrder" type="number" min="0" max="10000" value="0"></label>
+              <label>Repository URL<input id="projectRepo" type="url" maxlength="500"></label>
+              <label>Demo URL<input id="projectDemo" type="url" maxlength="500"></label>
+              <label>Image URL<input id="projectImage" type="url" maxlength="500"></label>
+            </div>
+            <div class="checks"><label><input id="projectFeatured" type="checkbox"> Featured</label><label><input id="projectPublished" type="checkbox" checked> Published</label></div>
+            <div class="actions"><button type="submit" class="primary">Save project</button><button type="button" id="cancelProjectBtn" class="ghost">Cancel</button></div>
+            <p id="projectStatus" class="status" role="status"></p>
+          </form>
+        </div>
+        <div id="projectsList" class="card-grid"><div class="empty">Loading projects…</div></div>
+      </section>
+
+      <section id="certificatesTab" class="tab-panel" hidden>
+        <div class="section-head"><div><h2>Certificates</h2><p class="muted">Manage published and draft certificate records.</p></div><button id="newCertificateBtn" class="primary">New certificate</button></div>
+        <div id="certificateFormWrap" class="panel form-panel" hidden>
+          <form id="certificateForm">
+            <input id="certificateId" type="hidden">
+            <div class="form-grid">
+              <label>Title<input id="certificateTitle" required maxlength="160"></label>
+              <label>Issuer<input id="certificateIssuer" maxlength="160"></label>
+              <label>Issued on<input id="certificateIssuedOn" type="date"></label>
+              <label>Display order<input id="certificateOrder" type="number" min="0" max="10000" value="0"></label>
+              <label class="wide">Credential URL<input id="certificateCredential" type="url" maxlength="500"></label>
+              <label class="wide">Image URL<input id="certificateImage" type="url" maxlength="500"></label>
+              <label class="wide">Description<textarea id="certificateDescription" maxlength="2000"></textarea></label>
+            </div>
+            <div class="checks"><label><input id="certificatePublished" type="checkbox" checked> Published</label></div>
+            <div class="actions"><button type="submit" class="primary">Save certificate</button><button type="button" id="cancelCertificateBtn" class="ghost">Cancel</button></div>
+            <p id="certificateStatus" class="status" role="status"></p>
+          </form>
+        </div>
+        <div id="certificatesList" class="card-grid"><div class="empty">Loading certificates…</div></div>
+      </section>
+
+      <section id="analyticsTab" class="tab-panel" hidden>
+        <div class="section-head"><div><h2>Analytics</h2><p class="muted">Aggregated events only; no message contents or credentials.</p></div><button id="refreshAnalytics" class="ghost">Refresh</button></div>
+        <div class="analytics-controls"><label>Days<select id="analyticsDays"><option>7</option><option selected>30</option><option>60</option><option>90</option></select></label></div>
+        <div id="analyticsSummary" class="metrics"><div class="empty">Loading analytics…</div></div>
+        <div class="analytics-grid"><div class="panel"><h3>By event</h3><pre id="analyticsEvents">—</pre></div><div class="panel"><h3>By section</h3><pre id="analyticsSections">—</pre></div><div class="panel"><h3>By project</h3><pre id="analyticsProjects">—</pre></div><div class="panel"><h3>By day</h3><pre id="analyticsDaysData">—</pre></div></div>
+      </section>
+    </section>
+  </main>
+  <script src="./admin.js" defer></script>
+</body>
+</html>
