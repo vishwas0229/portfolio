@@ -194,7 +194,7 @@ Get best experience on desktop.</span>
       <button class="mobile-nav-arrow mobile-nav-left" id="mobileNavLeft" type="button" aria-label="Move left">&#8592;</button>
       <button class="mobile-nav-arrow mobile-nav-right" id="mobileNavRight" type="button" aria-label="Move right">&#8594;</button>
     </div>
-    <button class="goodday-trigger" id="goodDayArrow" type="button" aria-label="Open have a good day card">&#8595;</button>
+    <button class="goodday-trigger" id="goodDayArrow" type="button" aria-label="Open have a good day card" aria-controls="goodDayModal">&#8595;</button>
 
     <section class="modal" id="goodDayModal" aria-hidden="true">
       <div class="goodday-panel" role="dialog" aria-modal="true" aria-labelledby="goodDayModalTitle">
@@ -607,12 +607,12 @@ Get best experience on desktop.</span>
         <div class="game-title" id="gameModalTitle">Tic-Tac-Toe</div>
         <div class="game-hud">
           <span>You: X</span>
-          <select id="difficulty" class="select">
+          <label class="sr-only" for="difficulty">Game difficulty</label><select id="difficulty" class="select">
             <option value="easy">Easy</option>
             <option value="hard">Hard</option>
           </select>
         </div>
-        <div class="board" id="board"></div>
+        <div class="board" id="board" role="group" aria-label="Tic-Tac-Toe board"></div>
         <div class="bottom-controls">
           <button class="btn" onclick="resetGame()">Restart</button>
         </div>
