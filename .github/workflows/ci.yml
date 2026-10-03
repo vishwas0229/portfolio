@@ -39,7 +39,6 @@ jobs:
       - name: Validate site metadata and deployment files
         run: node scripts/validate-site.mjs
 
-
   docker:
     runs-on: ubuntu-latest
     steps:
@@ -71,6 +70,9 @@ jobs:
 
       - name: Verify public project API
         run: curl --fail --silent http://127.0.0.1:8888/api/projects
+
+      - name: Build application image
+        run: docker build --tag rahul-portfolio:test .
 
       - name: Stop Docker stack
         if: always()
