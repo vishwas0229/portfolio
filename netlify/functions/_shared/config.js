@@ -19,7 +19,8 @@ const config = Object.freeze({
   apiRateLimitWindowMs: intEnv("API_RATE_LIMIT_WINDOW_SECONDS", 60, 10, 3600) * 1000,
   apiRateLimitMax: intEnv("API_RATE_LIMIT_MAX", 60, 1, 600),
   appVersion: trimEnv("APP_VERSION", process.env.COMMIT_REF || process.env.COMMIT_SHA || "dev"),
-  secureCookies: String(process.env.COOKIE_SECURE || "true").toLowerCase() !== "false"
+  secureCookies: String(process.env.COOKIE_SECURE || "true").toLowerCase() !== "false",
+  adminSessionTtlSeconds: intEnv("ADMIN_SESSION_TTL_SECONDS", 1800, 300, 86400)
 });
 
 module.exports = { config };
