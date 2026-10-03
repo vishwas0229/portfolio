@@ -56,7 +56,7 @@ function formatCooldown(seconds){
 function startLoginCooldown(seconds){
   clearInterval(loginCooldownTimer);
   let remaining=Math.max(1,Number(seconds)||1);
-  const button=$('#loginForm button[type="submit"]');
+  const button=document.querySelector('#loginForm button[type="submit"]');
   button.disabled=true;
   const tick=()=>{
     if(remaining<=0){
@@ -76,7 +76,7 @@ $("loginForm").addEventListener("submit",async e=>{
   clearInterval(loginCooldownTimer);
   $("loginStatus").textContent="Signing in…";
   $("loginStatus").className="status status-info";
-  const button=$('#loginForm button[type="submit"]');
+  const button=document.querySelector('#loginForm button[type="submit"]');
   button.disabled=true;
   try{
     const d=await api("/api/admin/login",{method:"POST",body:JSON.stringify({email:$("#loginEmail").value,password:$("#loginPassword").value})});
