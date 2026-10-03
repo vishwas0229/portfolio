@@ -4,6 +4,8 @@ const { list, insert, update, remove } = require("./_shared/db");
 const { requireAdmin, requireSameOrigin, requireCsrf } = require("./_shared/auth");
 
 function pathId(event) {
+  const queryId = event.queryStringParameters?.id;
+  if (queryId) return String(queryId).trim();
   const raw = String(event.path || "").split("/").filter(Boolean);
   const marker = raw.indexOf("certificates");
   return marker >= 0 ? raw[marker + 1] || null : null;
