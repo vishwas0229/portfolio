@@ -3,6 +3,10 @@ const { requireAdmin, requireSameOrigin, requireCsrf } = require("./_shared/auth
 const { list, update } = require("./_shared/db");
 const { validateString } = require("./_shared/validation");
 
+function mysqlDateTime(value = new Date()) {
+  return value.toISOString().slice(0, 19).replace("T", " ");
+}
+
 function messageId(event) {
   const parts = String(event.path || "").split("/").filter(Boolean);
   const marker = parts.indexOf("messages");
@@ -62,3 +66,5 @@ exports.handler = async (event) => {
     }, event);
   }
 };
+
+exports.mysqlDateTime = mysqlDateTime;
