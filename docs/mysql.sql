@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS certificates (
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
+  UNIQUE KEY certificates_title_uq (title),
   KEY certificates_published_order_idx (published, display_order, created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -60,7 +61,7 @@ CREATE TABLE IF NOT EXISTS contact_messages (
 CREATE TABLE IF NOT EXISTS analytics_events (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   event_name VARCHAR(40) NOT NULL,
-  event_date DATE NOT NULL DEFAULT (CURRENT_DATE),
+  event_date DATE NOT NULL,
   section VARCHAR(80) NULL,
   project_slug VARCHAR(100) NULL,
   metadata JSON NOT NULL,
