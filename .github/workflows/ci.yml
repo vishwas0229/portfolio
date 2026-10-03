@@ -82,8 +82,9 @@ jobs:
           test "$status" = "200"
           grep -q '"authenticated":true' /tmp/admin-login.json
           grep -q '"csrfToken":"' /tmp/admin-login.json
-
-          curl --fail --silent             -b /tmp/admin.cookies             http://127.0.0.1:8888/api/admin/session | grep -q '"authenticated":true'
+          grep -q 'portfolio_admin_session=' /tmp/admin.cookies
+          curl --silent --show-error --fail             -b /tmp/admin.cookies             http://127.0.0.1:8888/api/admin/session > /tmp/admin-session.json
+          grep -q '"authenticated":true' /tmp/admin-session.json
 
       - name: Verify admin account route
         run: |
