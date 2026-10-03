@@ -27,6 +27,14 @@ test("login cookies include signed session and CSRF token", () => {
   assert.match(cookies[1], /portfolio_admin_csrf=/);
 });
 
+test("session contains a database session version", () => {
+  const cookies = createLoginCookies("admin@example.com", 7);
+  const sessionCookie = cookies[0].split(";")[0];
+  const event = { headers: { cookie: sessionCookie } };
+  const session = getSession(event);
+  assert.equal(session.sessionVersion, 7);
+});
+
 test("session endpoint accepts a correctly signed cookie", () => {
   const cookies = createLoginCookies("admin@example.com");
   const sessionCookie = cookies[0].split(";")[0];
@@ -34,4 +42,5 @@ test("session endpoint accepts a correctly signed cookie", () => {
   const session = getSession(event);
   assert.equal(session.sub, "admin@example.com");
   assert.equal(session.role, "admin");
+  assert.equal(session.sessionVersion, 1);
 });

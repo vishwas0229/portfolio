@@ -61,6 +61,12 @@
   force = true
 
 [[redirects]]
+  from = "/api/admin/account"
+  to = "/.netlify/functions/admin-account"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/api/admin/messages"
   to = "/.netlify/functions/admin-messages"
   status = 200

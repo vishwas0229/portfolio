@@ -70,12 +70,13 @@ function verifyPassword(password, encoded) {
   }
 }
 
-function buildSession(email) {
+function buildSession(email, sessionVersion = 1) {
   const csrf = crypto.randomBytes(24).toString("base64url");
   return {
     payload: {
       sub: email,
       role: "admin",
+      sessionVersion: Number(sessionVersion) || 1,
       csrf,
       iat: Math.floor(Date.now() / 1000),
       exp: Math.floor(Date.now() / 1000) + SESSION_TTL_SECONDS
@@ -92,10 +93,20 @@ function clearCookie(name) {
   return `${name}=; Path=/; Max-Age=0; SameSite=Strict${config.secureCookies ? "; Secure" : ""}${name === SESSION_COOKIE ? "; HttpOnly" : ""}`;
 }
 
-function createLoginCookies(email) {
-  const session = buildSession(email);
+function createLoginSession(email, sessionVersion = 1) {
+  const session = buildSession(email, sessionVersion);
   const token = encode(session.payload);
-  return [cookie(SESSION_COOKIE, token, SESSION_TTL_SECONDS, true), cookie(CSRF_COOKIE, session.csrf, SESSION_TTL_SECONDS, false)];
+  return {
+    cookies: [
+      cookie(SESSION_COOKIE, token, SESSION_TTL_SECONDS, true),
+      cookie(CSRF_COOKIE, session.csrf, SESSION_TTL_SECONDS, false)
+    ],
+    csrf: session.csrf
+  };
+}
+
+function createLoginCookies(email, sessionVersion = 1) {
+  return createLoginSession(email, sessionVersion).cookies;
 }
 
 function getSession(event) {
@@ -113,10 +124,13 @@ async function requireAdmin(event) {
 
   const rows = await list(
     "admins",
-    `?select=email,role,active&email=eq.${encodeURIComponent(session.sub)}&limit=1`
+    `?select=email,role,active,session_version&email=eq.${encodeURIComponent(session.sub)}&limit=1`
   );
   const admin = Array.isArray(rows) ? rows[0] : null;
-  if (!admin || !Boolean(admin.active) || admin.role !== "admin") {
+  if (!admin ||
+      !Boolean(admin.active) ||
+      admin.role !== "admin" ||
+      Number(admin.session_version || 1) !== Number(session.sessionVersion || 0)) {
     const error = new Error("Unauthorized");
     error.statusCode = 401;
     throw error;
@@ -151,6 +165,7 @@ module.exports = {
   hashPassword,
   verifyPassword,
   createLoginCookies,
+  createLoginSession,
   getSession,
   requireAdmin,
   requireSameOrigin,

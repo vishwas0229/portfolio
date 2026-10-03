@@ -99,7 +99,7 @@ If you like this project, consider giving it a ⭐ on GitHub!
 
 - [DSA Problems](https://github.com/vishwas0229/DSA_Problems)
 - [e-Karamchari](https://github.com/vishwas0229/e-Karamchari) — [Live Demo](https://ekaramchari.netlify.app/)
-- [Portfolio](https://github.com/vishwas0229/portfolio) — [Live Demo](https://rahulport-folio.netlify.app/)
+- [Portfolio](https://github.com/vishwas0229/portfolio) — [Live Demo](https://portfolio.postlyfi.in/)
 
 
 ## Backend
@@ -112,7 +112,7 @@ The portfolio now includes a serverless Node.js backend on Netlify Functions.
 - `GET /api/certificates` — published certificates
 - `POST /api/contact` — validated contact submission with database persistence and optional SMTP notification
 - `POST /api/analytics` — privacy-conscious event ingestion
-- `/api/admin/*` — authenticated admin operations for messages, projects, certificates and analytics
+- `/api/admin/*` — authenticated admin operations for messages, projects, certificates, analytics and account settings
 
 ### Data & security
 
@@ -127,6 +127,8 @@ Database setup files:
 - `docs/mysql-seed.sql`
 
 Admin console: `/admin/`
+
+The **Account** tab lets the signed-in admin change the email/password stored in MySQL. The current password is required for every credential change, the new password is stored only as a PBKDF2 hash, and older sessions are invalidated.
 
 
 ## 🐳 Docker — Local Full Stack
@@ -178,6 +180,12 @@ docker compose down -v
 ```
 
 Use `docker compose down -v` only when you intentionally want to delete the local MySQL volume and start with a fresh database.
+
+For an existing MySQL volume created before admin session versioning, run the migration once:
+
+```bash
+docker compose exec -T db mysql -uportfolio -pportfolio_dev portfolio < docs/mysql-migrate.sql
+```
 
 ### Configuration
 
