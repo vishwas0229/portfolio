@@ -61,13 +61,16 @@ jobs:
       - name: Verify application health
         run: |
           for i in {1..30}; do
-            if curl --fail --silent http://127.0.0.1:8888/api/health; then
+            if curl --fail --silent http://127.0.0.1:8888/api/health?deep=1; then
               exit 0
             fi
             sleep 2
           done
           docker compose logs
           exit 1
+
+      - name: Verify deep application health
+        run: curl --fail --silent http://127.0.0.1:8888/api/health?deep=1 | grep -q '"database":"up"'
 
       - name: Verify public project API
         run: curl --fail --silent http://127.0.0.1:8888/api/projects
