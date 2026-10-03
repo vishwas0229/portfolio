@@ -114,7 +114,7 @@ exports.handler = async (event) => {
       return json(500, { ok: false, error: "Account could not be updated." }, event);
     }
 
-    const authSession = createLoginSession(updated.email, updated.session_version);
+    const authSession = createLoginSession(updated.email, updated.session_version, event);
 
     return json(200, {
       ok: true,
