@@ -6,7 +6,8 @@ const TABLE_COLUMNS = Object.freeze({
   projects: ["id","title","slug","summary","description","tech_stack","repository_url","demo_url","image_url","featured","display_order","published","created_at","updated_at"],
   certificates: ["id","title","issuer","issued_on","credential_url","image_url","description","display_order","published","created_at","updated_at"],
   contact_messages: ["id","name","email","subject","message","page_url","status","email_status","email_error","created_at","read_at","archived_at"],
-  analytics_events: ["id","event_name","event_date","section","project_slug","metadata","created_at"]
+  analytics_events: ["id","event_name","event_date","section","project_slug","metadata","created_at"],
+  admins: ["id","email","password_hash","role","active","created_at","updated_at"]
 });
 
 const JSON_COLUMNS = new Set(["tech_stack","metadata"]);
