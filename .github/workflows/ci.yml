@@ -39,7 +39,6 @@ jobs:
       - name: Validate site metadata and deployment files
         run: node scripts/validate-site.mjs
 
-
   docker:
     runs-on: ubuntu-latest
     steps:
@@ -49,5 +48,32 @@ jobs:
       - name: Validate Docker Compose configuration
         run: docker compose config
 
+      - name: Start Docker stack
+        run: docker compose up -d --build
+
+      - name: Verify MySQL schema
+        run: |
+          docker compose exec -T db mysql -uportfolio -pportfolio_dev portfolio -e "SHOW TABLES;"
+          docker compose exec -T db mysql -uportfolio -pportfolio_dev portfolio -e "SELECT COUNT(*) AS projects FROM projects;"
+          docker compose exec -T db mysql -uportfolio -pportfolio_dev portfolio -e "SELECT COUNT(*) AS certificates FROM certificates;"
+
+      - name: Verify application health
+        run: |
+          for i in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:8888/api/health; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker compose logs
+          exit 1
+
+      - name: Verify public project API
+        run: curl --fail --silent http://127.0.0.1:8888/api/projects
+
       - name: Build application image
         run: docker build --tag rahul-portfolio:test .
+
+      - name: Stop Docker stack
+        if: always()
+        run: docker compose down -v

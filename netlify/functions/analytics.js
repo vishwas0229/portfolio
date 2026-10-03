@@ -44,10 +44,11 @@ exports.handler = async (event) => {
 
     await insert("analytics_events", {
       event_name: name.value,
+      event_date: new Date().toISOString().slice(0, 10),
       section: section.value || null,
       project_slug: project.value || null,
       metadata: compactMetadata
-      // event_date/created_at are assigned by PostgreSQL; client timestamps are ignored.
+      // The server assigns event_date; client timestamps are ignored.
     });
 
     return json(202, { ok: true }, event, rateLimitHeaders(limited, LIMIT));
