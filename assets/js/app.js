@@ -3247,7 +3247,7 @@ window.addEventListener("error", function (event) {
         if (status) status.textContent = "Fetching live GitHub data…";
         if (refresh) refresh.disabled = true;
         try {
-          const response = await fetch(`/.netlify/functions/github?username=vishwas0229&t=${Date.now()}`, { cache: "no-store" });
+          const response = await fetch(`/.netlify/functions/github?t=${Date.now()}`, { cache: "no-store" });
           if (!response.ok) throw new Error(`Server ${response.status}`);
           const payload = await response.json();
           if (!payload.ok || !payload.data) throw new Error(payload.error || "No live data");
@@ -3404,12 +3404,12 @@ window.addEventListener("error", function (event) {
         if (status) status.textContent = "Fetching live data…";
         if (refresh) refresh.disabled = true;
         try {
-          const response = await fetch(`/.netlify/functions/leetcode?username=vishwas0229&t=${Date.now()}`, { cache: "no-store" });
+          const response = await fetch(`/.netlify/functions/leetcode?t=${Date.now()}`, { cache: "no-store" });
           if (!response.ok) throw new Error(`Server ${response.status}`);
           const payload = await response.json();
           if (!payload.ok || !payload.data) throw new Error(payload.error || "No live data");
           const d = payload.data;
-          setLeetCodeText("leetcodeUsername", d.username || "vishwas0229");
+          setLeetCodeText("leetcodeUsername", d.username || "GitHub");
           setLeetCodeText("lcTotal", d.totalSolved);
           setLeetCodeText("lcEasy", d.easySolved);
           setLeetCodeText("lcMedium", d.mediumSolved);
