@@ -12,6 +12,12 @@ async function api(path,options={}){
   const response=await fetch(path,{...options,headers,credentials:"include"});
   let data=null;try{data=await response.json()}catch(_){}
   if(response.status===401){showLogin();throw new Error("Authentication required.")}
+  if(response.status===429){
+    const error=new Error(data&&data.error?data.error:"Too many requests. Please retry later.");
+    error.status=429;
+    error.retryAfter=Number(response.headers.get("retry-after")||data?.retryAfter||0);
+    throw error;
+  }
   if(!response.ok)throw new Error(data&&data.error?data.error:"Request failed ("+response.status+")");
   return data;
 }
@@ -21,7 +27,54 @@ async function loadSession(){try{const d=await api("/api/admin/session");if(d.au
 
 async function loadAccount(){try{const d=await api("/api/admin/account");const account=d.data||{};$("accountEmail").value=account.email||"";$("accountStatus").textContent=""}catch(err){$("accountStatus").textContent=err.message}}
 
-$("loginForm").addEventListener("submit",async e=>{e.preventDefault();$("loginStatus").textContent="Signing in…";try{const d=await api("/api/admin/login",{method:"POST",body:JSON.stringify({email:$("loginEmail").value,password:$("loginPassword").value})});const s=await api("/api/admin/session");csrfToken=s.csrfToken;showApp(d.user);$("loginPassword").value="";$("loginStatus").textContent="";await loadMessages()}catch(err){$("loginStatus").textContent=err.message}});
+let loginCooldownTimer=null;
+function formatCooldown(seconds){
+  const total=Math.max(1,Number(seconds)||1);
+  const minutes=Math.floor(total/60);
+  const secs=total%60;
+  return minutes>0 ? (minutes+"m "+String(secs).padStart(2,"0")+"s") : (secs+"s");
+}
+function startLoginCooldown(seconds){
+  clearInterval(loginCooldownTimer);
+  let remaining=Math.max(1,Number(seconds)||1);
+  const button=$('#loginForm button[type="submit"]');
+  button.disabled=true;
+  const tick=()=>{
+    $("loginStatus").textContent="Too many login attempts. Try again in "+formatCooldown(remaining)+".";
+    if(remaining<=0){
+      clearInterval(loginCooldownTimer);
+      button.disabled=false;
+      $("loginStatus").textContent="You can try signing in again.";
+      return;
+    }
+    remaining-=1;
+  };
+  tick();
+  loginCooldownTimer=setInterval(tick,1000);
+}
+$("loginForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  clearInterval(loginCooldownTimer);
+  $("loginStatus").textContent="Signing in…";
+  const button=$('#loginForm button[type="submit"]');
+  button.disabled=true;
+  try{
+    const d=await api("/api/admin/login",{method:"POST",body:JSON.stringify({email:$("#loginEmail").value,password:$("#loginPassword").value})});
+    const s=await api("/api/admin/session");
+    csrfToken=s.csrfToken;
+    showApp(d.user);
+    $("#loginPassword").value="";
+    $("#loginStatus").textContent="";
+    await loadMessages();
+  }catch(err){
+    if(err.status===429){
+      startLoginCooldown(err.retryAfter);
+    }else{
+      button.disabled=false;
+      $("#loginStatus").textContent=err.message;
+    }
+  }
+});
 $("logoutBtn").addEventListener("click",async()=>{try{await api("/api/admin/logout",{method:"POST"})}finally{showLogin()}});
 
 document.querySelectorAll(".tabs button").forEach(btn=>btn.addEventListener("click",async()=>{
