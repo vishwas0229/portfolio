@@ -1,14 +1,7 @@
-const USERNAME = 'vishwas0229';
-
-const json = (statusCode, body) => ({
-  statusCode,
-  headers: {
-    'content-type': 'application/json; charset=utf-8',
-    'cache-control': 'no-store, max-age=0',
-    'access-control-allow-origin': '*'
-  },
-  body: JSON.stringify(body)
-});
+const { config } = require("./_shared/config");
+const { json, options } = require("./_shared/http");
+const { getClientIp, checkRateLimit, rateLimitHeaders } = require("./_shared/rate-limit");
+const { getOrLoad } = require("./_shared/cache");
 
 async function fetchJson(url, ms = 15000) {
   const controller = new AbortController();
@@ -16,7 +9,7 @@ async function fetchJson(url, ms = 15000) {
   try {
     const res = await fetch(url, {
       signal: controller.signal,
-      headers: { 'accept': 'application/json', 'user-agent': 'Rahul-Portfolio/1.0' }
+      headers: { accept: "application/json", "user-agent": "Rahul-Portfolio/1.0" }
     });
     if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
     return await res.json();
@@ -165,28 +158,61 @@ async function fetchThirdParty(username) {
   return null;
 }
 
-exports.handler = async (event) => {
-  const username = (event.queryStringParameters?.username || USERNAME).trim();
-  if (!/^[A-Za-z0-9_-]{1,40}$/.test(username)) return json(400, { error: 'Invalid username' });
-  try {
-    const thirdParty = await fetchThirdParty(username);
-    let data = thirdParty;
-    let source = thirdParty ? 'public-leetcode-rest-api' : 'leetcode-graphql';
-    // The public REST mirrors often omit acceptance rate. If it is missing,
-    // enrich the response from LeetCode GraphQL without replacing the rest
-    // of the live calendar/stats payload.
-    if (!data || data.acceptance == null) {
-      try {
-        const graph = await fetchGraphQL(username);
-        data = data ? { ...data, acceptance: graph.acceptance, ranking: data.ranking ?? graph.ranking, contestRating: data.contestRating ?? graph.contestRating } : graph;
-        source = data && thirdParty ? 'public-api+leetcode-graphql' : 'leetcode-graphql';
-      } catch (_) {
-        // Keep the working public API payload if GraphQL is unavailable.
-      }
+
+async function loadLeetCodeData(username) {
+  const thirdParty = await fetchThirdParty(username);
+  let data = thirdParty;
+  let source = thirdParty ? "public-leetcode-rest-api" : "leetcode-graphql";
+
+  if (!data || data.acceptance == null) {
+    try {
+      const graph = await fetchGraphQL(username);
+      data = data
+        ? { ...data, acceptance: graph.acceptance, ranking: data.ranking ?? graph.ranking, contestRating: data.contestRating ?? graph.contestRating }
+        : graph;
+      source = data && thirdParty ? "public-api+leetcode-graphql" : "leetcode-graphql";
+    } catch (_) {
+      // Keep working public API data if GraphQL is unavailable.
     }
-    if (!data) throw new Error('No live LeetCode data');
-    return json(200, { ok: true, source, data });
-  } catch (error) {
-    return json(502, { ok: false, error: 'Live LeetCode data could not be fetched right now.', detail: String(error?.message || error) });
+  }
+
+  if (!data) throw new Error("No live LeetCode data");
+  return { source, data };
+}
+
+exports.handler = async (event) => {
+  if (event.httpMethod === "OPTIONS") return options(event);
+  if (event.httpMethod !== "GET") {
+    return json(405, { ok: false, error: "Method not allowed" }, event, { allow: "GET, OPTIONS" });
+  }
+
+  const username = (event.queryStringParameters?.username || config.leetcodeUsername).trim();
+  if (!/^[A-Za-z0-9_-]{1,40}$/.test(username)) {
+    return json(400, { ok: false, error: "Invalid username" }, event);
+  }
+
+  const limited = checkRateLimit(`leetcode:${getClientIp(event)}`);
+  if (!limited.allowed) {
+    return json(429, { ok: false, error: "Too many requests. Please retry later." }, event, rateLimitHeaders(limited));
+  }
+
+  try {
+    const cached = await getOrLoad(
+      `leetcode:${username}`,
+      () => loadLeetCodeData(username),
+      config.leetcodeCacheTtlMs,
+      config.cacheStaleMs
+    );
+
+    return json(200, {
+      ok: true,
+      source: cached.value.source,
+      data: cached.value.data
+    }, event, {
+      ...rateLimitHeaders(limited),
+      "x-api-cache": cached.fallback ? "stale" : cached.cache.state
+    });
+  } catch (_) {
+    return json(502, { ok: false, error: "Live LeetCode data could not be fetched right now." }, event, rateLimitHeaders(limited));
   }
 };

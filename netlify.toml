@@ -3,3 +3,9 @@
 
 [build]
   publish = "."
+
+[[redirects]]
+  from = "/api/health"
+  to = "/.netlify/functions/health"
+  status = 200
+  force = true
