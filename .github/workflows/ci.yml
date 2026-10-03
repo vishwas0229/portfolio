@@ -1,0 +1,51 @@
+name: Portfolio CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install --ignore-scripts --no-audit --no-fund
+      - run: |
+          node --check assets/js/app.js
+          for file in netlify/functions/*.js; do node --check "$file"; done
+          for file in netlify/functions/_shared/*.js; do node --check "$file"; done
+      - run: npm test
+      - run: node scripts/validate-site.mjs
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose config
+      - run: docker compose up -d --build
+      - name: Verify MySQL
+        run: |
+          docker compose exec -T db mysql -uportfolio -pportfolio_dev portfolio -e "SHOW TABLES;"
+          docker compose exec -T db mysql -uportfolio -pportfolio_dev portfolio -e "SELECT COUNT(*) AS admins FROM admins WHERE role='admin' AND active=TRUE;"
+      - name: Verify health
+        run: curl --fail --silent "http://127.0.0.1:8888/api/health?deep=1"
+      - name: Verify admin login response
+        run: |
+          code=$(curl --silent --output /tmp/admin-login.json --write-out "%{http_code}"             -H "Origin: http://localhost:8888"             -H "Content-Type: application/json"             -d '{"email":"admin@localhost","password":"Admin@12345678"}'             http://127.0.0.1:8888/api/admin/login)
+          test "$code" = "200"
+          grep -q '"authenticated":true' /tmp/admin-login.json
+      - name: Verify feedback persistence
+        run: |
+          code=$(curl --silent --output /tmp/feedback.json --write-out "%{http_code}"             -H "Content-Type: application/json"             -d '{"name":"CI Test","email":"ci@example.com","subject":"Portfolio feedback","message":"Hello","pageUrl":"http://127.0.0.1:8888/"}'             http://127.0.0.1:8888/api/contact)
+          test "$code" = "201"
+          grep -q '"ok":true' /tmp/feedback.json
+      - run: docker build --tag rahul-portfolio:test .
+      - if: always()
+        run: docker compose down -v
