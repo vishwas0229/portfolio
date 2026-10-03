@@ -1,6 +1,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 
+process.env.NODE_ENV = "development";
 process.env.ADMIN_SESSION_SECRET = "unit-test-secret-that-is-long-enough-123456";
 process.env.CORS_ORIGIN = "http://localhost:8888";
 process.env.COOKIE_SECURE = "false";
@@ -9,7 +10,10 @@ const {
   hashPassword,
   verifyPassword,
   createLoginCookies,
-  getSession
+  getSession,
+  requireSameOrigin,
+  requestIsHttps,
+  SESSION_TTL_SECONDS
 } = require("../netlify/functions/_shared/auth");
 const { validateEmail, validateAdminEmail } = require("../netlify/functions/_shared/validation");
 
@@ -56,4 +60,26 @@ test("session endpoint accepts a correctly signed cookie", () => {
   assert.equal(session.sub, "admin@example.com");
   assert.equal(session.role, "admin");
   assert.equal(session.sessionVersion, 1);
+});
+
+test("admin session TTL is finite and configurable", () => {
+  assert.equal(SESSION_TTL_SECONDS, 1800);
+});
+
+test("secure cookies follow proxied HTTPS requests", () => {
+  const cookies = createLoginCookies("admin@example.com", 1, {
+    headers: { "x-forwarded-proto": "https" }
+  });
+  assert.match(cookies[0], /; Secure/);
+  assert.equal(requestIsHttps({ headers: { "x-forwarded-proto": "https" } }), true);
+  assert.equal(requestIsHttps({ headers: { "x-forwarded-proto": "http" } }), false);
+});
+
+test("development Cloudflare Tunnel origin is allowed", () => {
+  assert.doesNotThrow(() => requireSameOrigin({
+    headers: {
+      origin: "https://example.trycloudflare.com",
+      "cf-connecting-ip": "203.0.113.10"
+    }
+  }));
 });

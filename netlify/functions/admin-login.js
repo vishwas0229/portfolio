@@ -43,7 +43,7 @@ exports.handler = async (event) => {
     }
 
     resetRateLimit(rateKey);
-    const authSession = createLoginSession(admin.email, admin.session_version);
+    const authSession = createLoginSession(admin.email, admin.session_version, event);
 
     return json(200, {
       ok: true,

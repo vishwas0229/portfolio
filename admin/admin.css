@@ -119,7 +119,7 @@ input:focus,textarea:focus,select:focus{border-color:rgba(87,215,255,.72);box-sh
 .topbar-kicker{font-size:9px;letter-spacing:.18em;font-weight:850;color:#607188}
 .topbar h1{margin:0;font-size:24px;letter-spacing:-.03em}
 .topbar-right{margin-left:auto}
-.topbar-status{display:inline-flex;align-items:center;gap:7px;font-size:10px;color:#8ca0b6;padding:7px 10px;border:1px solid rgba(110,231,164,.1);background:rgba(110,231,164,.035);border-radius:999px}
+.topbar-status{display:inline-flex;align-items:center;gap:7px;font-size:10px;color:#8ca0b6;padding:7px 10px;border:1px solid rgba(110,231,164,.1);background:rgba(110,231,164,.035);border-radius:999px}.topbar-status.session-warning{border-color:rgba(255,190,90,.22);background:rgba(255,190,90,.06);color:#f4c77c}.topbar-status.session-warning .live-dot{background:#f4c77c;box-shadow:0 0 11px rgba(244,199,124,.45)}
 .user-chip{display:flex;align-items:center;gap:8px;padding:5px 9px 5px 6px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.025);border-radius:999px;font-size:10px;color:#aebbd0;max-width:210px}
 .user-chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .logout-btn,.secondary-btn,.ghost{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:38px;padding:0 12px;border-radius:10px;color:#c2cfdf;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);cursor:pointer;font-weight:750}

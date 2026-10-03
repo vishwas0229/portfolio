@@ -6,7 +6,7 @@ exports.handler = async (event) => {
   if (event.httpMethod !== "POST") return json(405, { ok: false, error: "Method not allowed" }, event, { allow: "POST, OPTIONS" });
 
   return json(200, { ok: true }, event, {
-    "set-cookie": [clearCookie(SESSION_COOKIE), clearCookie(CSRF_COOKIE)],
+    "set-cookie": [clearCookie(SESSION_COOKIE, event), clearCookie(CSRF_COOKIE, event)],
     "cache-control": "no-store"
   });
 };
