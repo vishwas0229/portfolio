@@ -18,7 +18,8 @@ const config = Object.freeze({
   cacheStaleMs: intEnv("API_CACHE_STALE_SECONDS", 3600, 60, 604800) * 1000,
   apiRateLimitWindowMs: intEnv("API_RATE_LIMIT_WINDOW_SECONDS", 60, 10, 3600) * 1000,
   apiRateLimitMax: intEnv("API_RATE_LIMIT_MAX", 60, 1, 600),
-  appVersion: trimEnv("APP_VERSION", process.env.COMMIT_REF || process.env.COMMIT_SHA || "dev")
+  appVersion: trimEnv("APP_VERSION", process.env.COMMIT_REF || process.env.COMMIT_SHA || "dev"),
+  secureCookies: String(process.env.COOKIE_SECURE || "true").toLowerCase() !== "false"
 });
 
 module.exports = { config };
