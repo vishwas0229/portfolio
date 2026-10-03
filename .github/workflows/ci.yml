@@ -72,6 +72,12 @@ jobs:
       - name: Verify public project API
         run: curl --fail --silent http://127.0.0.1:8888/api/projects
 
+      - name: Verify admin account route
+        run: |
+          status=$(curl --silent --output /tmp/admin-account.json --write-out "%{http_code}" http://127.0.0.1:8888/api/admin/account)
+          test "$status" = "401"
+          grep -q '"error":"Authentication required."' /tmp/admin-account.json
+
       - name: Build application image
         run: docker build --tag rahul-portfolio:test .
 

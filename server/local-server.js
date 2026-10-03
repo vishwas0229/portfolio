@@ -18,6 +18,7 @@ const ROUTES = {
   "admin/login": "admin-login",
   "admin/logout": "admin-logout",
   "admin/session": "admin-session",
+  "admin/account": "admin-account",
   "admin/messages": "admin-messages",
   "admin/analytics": "admin-analytics"
 };
