@@ -118,7 +118,9 @@ The portfolio now includes a serverless Node.js backend on Netlify Functions.
 
 MySQL is used for persistent backend data. The database connection is server-side only.
 
-Admin sessions use signed HttpOnly cookies plus a CSRF token. Public write endpoints use input validation, honeypot support and rate limiting.
+Admin accounts are stored in the MySQL `admins` table. The login API loads the account by email, verifies the PBKDF2 password hash, and creates a signed HttpOnly session plus a CSRF token. Admin profile credentials are not stored in `.env`.
+
+Public write endpoints use input validation, honeypot support and rate limiting. Projects, certificates, contact messages and analytics are also stored in MySQL.
 
 Database setup files:
 - `docs/mysql.sql`
@@ -154,14 +156,14 @@ The Docker stack uses:
 - Native MySQL access through `mysql2`
 - The same backend function modules used by the production runtime
 
-The local admin login defaults to:
+The local MySQL seed creates one bootstrap admin:
 
 ```
 Email: admin@localhost
 Password: Admin@12345678
 ```
 
-This default is intended for localhost development only. Change the credentials before exposing the container beyond your own machine.
+These credentials are stored in the seeded `admins` database record, not in `.env`. The bootstrap password is for localhost development only and should be changed in the database before exposing the container beyond your own machine.
 
 ### Useful commands
 
@@ -186,7 +188,7 @@ DATABASE_URL=mysql://portfolio:portfolio_dev@db:3306/portfolio
 DB_POOL_MAX=10
 ```
 
-Admin and optional SMTP settings can be overridden from a local `.env` file.
+Only infrastructure/security settings such as the MySQL connection, session secret and optional SMTP credentials are configured through `.env`. Admin account credentials are database data.
 
 ### Architecture
 
