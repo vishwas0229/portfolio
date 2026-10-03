@@ -17,9 +17,6 @@ CREATE TABLE IF NOT EXISTS admins (
   CONSTRAINT admins_role_chk CHECK (role = 'admin')
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Keep existing persistent Docker volumes compatible with session versioning.
-ALTER TABLE admins
-  ADD COLUMN IF NOT EXISTS session_version BIGINT UNSIGNED NOT NULL DEFAULT 1 AFTER active;
 
 CREATE TABLE IF NOT EXISTS projects (
   id CHAR(36) NOT NULL DEFAULT (UUID()),
