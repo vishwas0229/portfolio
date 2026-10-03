@@ -173,15 +173,15 @@ Get best experience on desktop.</span>
     </div>
 
     <div class="click-layer">
-      <button class="click-target file-target" id="fileTarget" type="button" aria-label="Open portfolio file">
+      <button class="click-target file-target" id="fileTarget" type="button" aria-label="Open portfolio file" aria-controls="portfolioModal">
         <span class="target-label">Open File</span>
       </button>
 
-      <button class="click-target controller-target" id="controllerTarget" type="button" aria-label="Open retro handheld Tic-Tac-Toe game">
+      <button class="click-target controller-target" id="controllerTarget" type="button" aria-label="Open retro handheld Tic-Tac-Toe game" aria-controls="gameModal">
         <span class="target-label">Open Gamepad</span>
       </button>
 
-      <button class="click-target pen-target" id="penTarget" type="button" aria-label="Open feedback box">
+      <button class="click-target pen-target" id="penTarget" type="button" aria-label="Open feedback box" aria-controls="feedbackModal">
         <span class="target-label">Feedback</span>
       </button>
 
@@ -194,13 +194,13 @@ Get best experience on desktop.</span>
       <button class="mobile-nav-arrow mobile-nav-left" id="mobileNavLeft" type="button" aria-label="Move left">&#8592;</button>
       <button class="mobile-nav-arrow mobile-nav-right" id="mobileNavRight" type="button" aria-label="Move right">&#8594;</button>
     </div>
-    <button class="goodday-trigger" id="goodDayArrow" type="button" aria-label="Open have a good day card">&#8595;</button>
+    <button class="goodday-trigger" id="goodDayArrow" type="button" aria-label="Open have a good day card" aria-controls="goodDayModal">&#8595;</button>
 
     <section class="modal" id="goodDayModal" aria-hidden="true">
-      <div class="goodday-panel">
+      <div class="goodday-panel" role="dialog" aria-modal="true" aria-labelledby="goodDayModalTitle">
         <div class="modal-top">
           <div class="modal-title">
-            <strong>Final Note</strong>
+            <strong id="goodDayModalTitle">Final Note</strong>
             <span>A warm closing message from this portfolio experience.</span>
           </div>
           <button class="close-btn-main" id="closeGoodDayBtn" type="button" aria-label="Close have a good day card">&times;</button>
@@ -261,10 +261,10 @@ Get best experience on desktop.</span>
     </section>
 
     <section class="modal" id="portfolioModal" aria-hidden="true">
-      <div class="portfolio-panel">
+      <div class="portfolio-panel" role="dialog" aria-modal="true" aria-labelledby="portfolioModalTitle">
         <div class="modal-top">
           <div class="modal-title">
-            <strong>Portfolio File</strong>
+            <strong id="portfolioModalTitle">Portfolio File</strong>
 
           </div>
           <button class="close-btn-main" id="closePortfolioBtn" type="button" aria-label="Close portfolio">&times;</button>
@@ -470,10 +470,10 @@ Get best experience on desktop.</span>
     </section>
 
     <section class="modal" id="simpleViewModal" aria-hidden="true">
-      <div class="simple-panel">
+      <div class="simple-panel" role="dialog" aria-modal="true" aria-labelledby="simpleViewModalTitle">
         <div class="modal-top">
           <div class="modal-title">
-            <strong>Simple View</strong>
+            <strong id="simpleViewModalTitle">Simple View</strong>
           </div>
           <button class="close-btn-main" id="closeSimpleViewBtn" type="button" aria-label="Close simple view">&times;</button>
         </div>
@@ -482,9 +482,9 @@ Get best experience on desktop.</span>
     </section>
 
     <section class="modal" id="snakeModal" aria-hidden="true">
-      <div class="simple-panel project-showcase-panel">
+      <div class="simple-panel project-showcase-panel" role="dialog" aria-modal="true" aria-labelledby="githubModalTitle">
         <div class="modal-top dashboard-modal-top">
-          <div class="modal-title"><strong>GitHub</strong><span>Live GitHub progress, contributions, and projects</span></div>
+          <div class="modal-title"><strong id="githubModalTitle">GitHub</strong><span>Live GitHub progress, contributions, and projects</span></div>
           <div class="dashboard-header-actions">
             <button class="mini-action" id="githubRefreshBtn" type="button">Refresh</button>
             <a class="mini-action" href="https://portfolio.postlyfi.in" target="_blank" rel="noopener">Open GitHub</a>
@@ -548,9 +548,9 @@ Get best experience on desktop.</span>
     </section>
 
     <section class="modal" id="leetcodeModal" aria-hidden="true">
-      <div class="simple-panel leetcode-panel">
+      <div class="simple-panel leetcode-panel" role="dialog" aria-modal="true" aria-labelledby="leetcodeModalTitle">
         <div class="modal-top dashboard-modal-top">
-          <div class="modal-title"><strong>LeetCode</strong><span>Live profile progress and submission activity</span></div>
+          <div class="modal-title"><strong id="leetcodeModalTitle">LeetCode</strong><span>Live profile progress and submission activity</span></div>
           <div class="dashboard-header-actions">
             <button class="mini-action" id="leetcodeRefreshBtn" type="button">Refresh</button>
             <a class="mini-action" href="https://leetcode.com/u/vishwas0229/" target="_blank" rel="noopener">Open LeetCode</a>
@@ -601,22 +601,22 @@ Get best experience on desktop.</span>
       </div>
     </section>
 
-    <div class="game-modal" id="gameModal">
-      <div class="game-box">
-        <div class="close-btn" onclick="closeGame()">&times;</div>
-        <div class="game-title">Tic-Tac-Toe</div>
+    <div class="game-modal" id="gameModal" role="dialog" aria-modal="true" aria-labelledby="gameModalTitle" aria-hidden="true">
+      <div class="game-box" tabindex="-1">
+        <button class="close-btn" id="closeGameBtn" type="button" aria-label="Close Tic-Tac-Toe game" onclick="closeGame()">&times;</button>
+        <div class="game-title" id="gameModalTitle">Tic-Tac-Toe</div>
         <div class="game-hud">
           <span>You: X</span>
-          <select id="difficulty" class="select">
+          <label class="sr-only" for="difficulty">Game difficulty</label><select id="difficulty" class="select">
             <option value="easy">Easy</option>
             <option value="hard">Hard</option>
           </select>
         </div>
-        <div class="board" id="board"></div>
+        <div class="board" id="board" role="group" aria-label="Tic-Tac-Toe board"></div>
         <div class="bottom-controls">
           <button class="btn" onclick="resetGame()">Restart</button>
         </div>
-        <div id="winPopup"></div>
+        <div id="winPopup" role="status" aria-live="polite"></div>
       </div>
     </div>
 

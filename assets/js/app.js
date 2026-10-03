@@ -21,6 +21,8 @@ window.addEventListener("error", function (event) {
       const beginBtn = document.getElementById("beginBtn");
       const hud = document.getElementById("hud");
       const appRoot = document.getElementById("app");
+      const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
       const hintChip = document.getElementById("hintChip");
       const uiVisibilityToggle = document.getElementById("uiVisibilityToggle");
       const simpleViewBtn = document.getElementById("simpleViewBtn");
@@ -2898,7 +2900,7 @@ window.addEventListener("error", function (event) {
         tl.to(introScreen, {
           opacity: 0,
           scale: 0.98,
-          duration: 0.52,
+          duration: prefersReducedMotion ? 0.01 : 0.52,
           onComplete: () => introScreen.classList.add("hidden")
         });
 
@@ -3105,9 +3107,9 @@ window.addEventListener("error", function (event) {
 
         const tl = gsap.timeline({ defaults: { ease: "power3.inOut" } });
         tl.add(moveCameraTo(shots.fileClose, isMobileQuery.matches ? 0.9 : 1.25))
-          .to(fileGroup.rotation, { z: 0.035, duration: 0.45, ease: "power2.inOut" }, "-=0.55")
-          .to(fileCover.scale, { x: 1.045, y: 1.045, z: 1, duration: 0.28, yoyo: true, repeat: 1, ease: "power2.inOut" }, "-=0.40")
-          .to(shade, { opacity: 0.52, duration: 0.24 }, "-=0.12")
+          .to(fileGroup.rotation, { z: 0.035, duration: prefersReducedMotion ? 0.01 : 0.45, ease: "power2.inOut" }, "-=0.55")
+          .to(fileCover.scale, { x: 1.045, y: 1.045, z: 1, duration: prefersReducedMotion ? 0.01 : 0.28, yoyo: true, repeat: 1, ease: "power2.inOut" }, "-=0.40")
+          .to(shade, { opacity: 0.52, duration: prefersReducedMotion ? 0.01 : 0.24 }, "-=0.12")
           .add(() => {
             portfolioModal.classList.add("active");
             portfolioModal.setAttribute("aria-hidden", "false");
@@ -3117,7 +3119,7 @@ window.addEventListener("error", function (event) {
           .add(() => {
             if (!isMobileQuery.matches) syncCameraToDeskPose();
           })
-          .to(shade, { opacity: 0, duration: 0.42 })
+          .to(shade, { opacity: 0, duration: prefersReducedMotion ? 0.01 : 0.42 })
           .add(() => {
             state = previousState === "desk" ? "desk" : previousState;
             animationBusy = false;
@@ -3159,7 +3161,7 @@ window.addEventListener("error", function (event) {
         refreshDeskUI();
         const shot = isMobileQuery.matches ? shots.mobileProjectsClose : shots.projectsClose;
         moveCameraTo(shot, isMobileQuery.matches ? 0.9 : 1.05, "power3.inOut")
-          .to(booksStack.rotation, { y: booksStack.rotation.y + 0.035, duration: 0.24, yoyo: true, repeat: 1, ease: "power2.inOut" }, "-=0.22")
+          .to(booksStack.rotation, { y: booksStack.rotation.y + 0.035, duration: prefersReducedMotion ? 0.01 : 0.24, yoyo: true, repeat: 1, ease: "power2.inOut" }, "-=0.22")
           .add(() => {
             mobileDeskFocus = isMobileQuery.matches ? "globe" : "overview";
             animationBusy = false;
@@ -3349,6 +3351,124 @@ window.addEventListener("error", function (event) {
           if (certStatus) certStatus.textContent = "Live certificate data is unavailable; showing local certificate content.";
         }
       }
+
+      const modalFocusState = new Map();
+      const modalElements = () => [
+        portfolioModal,
+        simpleViewModal,
+        snakeModal,
+        leetcodeModal,
+        goodDayModal,
+        feedbackModal,
+        document.getElementById("gameModal")
+      ].filter(Boolean);
+
+      function modalIsOpen(modal) {
+        return modal.getAttribute("aria-hidden") === "false" ||
+          modal.classList.contains("active") ||
+          modal.style.display === "flex";
+      }
+
+      function focusableElements(modal) {
+        return Array.from(modal.querySelectorAll(
+          'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), iframe, [tabindex]:not([tabindex="-1"])'
+        )).filter((el) => {
+          const style = window.getComputedStyle(el);
+          return style.display !== "none" && style.visibility !== "hidden";
+        });
+      }
+
+      function focusModal(modal) {
+        const first = focusableElements(modal)[0];
+        if (first) {
+          first.focus({ preventScroll: true });
+          return;
+        }
+        const panel = modal.firstElementChild;
+        if (panel) {
+          panel.setAttribute("tabindex", "-1");
+          panel.focus({ preventScroll: true });
+        }
+      }
+
+      function updateModalFocusState(modal) {
+        const open = modalIsOpen(modal);
+        const trigger = document.querySelector('[aria-controls="' + modal.id + '"]');
+        if (trigger) trigger.setAttribute("aria-expanded", open ? "true" : "false");
+
+        const state = modalFocusState.get(modal) || { open: false, returnFocus: null };
+        if (open && !state.open) {
+          state.open = true;
+          state.returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+          setTimeout(() => focusModal(modal), 0);
+        } else if (!open && state.open) {
+          state.open = false;
+          const target = state.returnFocus;
+          state.returnFocus = null;
+          if (target && document.contains(target) && typeof target.focus === "function") {
+            setTimeout(() => target.focus({ preventScroll: true }), 0);
+          }
+        }
+        modalFocusState.set(modal, state);
+      }
+
+      function closeAccessibleModal(modal) {
+        if (!modal) return;
+        switch (modal.id) {
+          case "portfolioModal": closePortfolio(); break;
+          case "simpleViewModal": closeSimpleView(); break;
+          case "snakeModal": closeSnakeView(); break;
+          case "leetcodeModal": closeLeetCodeView(); break;
+          case "goodDayModal": closeGoodDayModal(); break;
+          case "feedbackModal": closeFeedbackModal(); break;
+          case "gameModal": closeGame(); break;
+        }
+      }
+
+      const modalObserver = new MutationObserver((records) => {
+        records.forEach((record) => {
+          if (record.target && record.target.nodeType === 1) {
+            updateModalFocusState(record.target);
+          }
+        });
+      });
+
+      modalElements().forEach((modal) => {
+        modalObserver.observe(modal, {
+          attributes: true,
+          attributeFilter: ["class", "aria-hidden", "style"]
+        });
+        updateModalFocusState(modal);
+      });
+
+      document.addEventListener("keydown", (event) => {
+        const openModals = modalElements().filter(modalIsOpen);
+        const modal = openModals[openModals.length - 1];
+        if (!modal) return;
+
+        if (event.key === "Escape") {
+          event.preventDefault();
+          closeAccessibleModal(modal);
+          return;
+        }
+
+        if (event.key !== "Tab") return;
+        const focusables = focusableElements(modal);
+        if (!focusables.length) {
+          event.preventDefault();
+          return;
+        }
+
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus({ preventScroll: true });
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus({ preventScroll: true });
+        }
+      });
 
       function setGitHubText(id, value) {
         const el = document.getElementById(id);
@@ -3735,7 +3855,7 @@ window.addEventListener("error", function (event) {
 
         const tl = gsap.timeline({ defaults: { ease: "power3.inOut" } });
         tl.add(moveCameraTo(shots.controllerClose, isMobileQuery.matches ? 0.85 : 1.05))
-          .to(controllerGroup.rotation, { z: -0.08, duration: 0.24, yoyo: true, repeat: 1, ease: "power2.inOut" }, "-=0.25")
+          .to(controllerGroup.rotation, { z: -0.08, duration: prefersReducedMotion ? 0.01 : 0.24, yoyo: true, repeat: 1, ease: "power2.inOut" }, "-=0.25")
           .add(() => {
             mobileDeskFocus = "controller";
             openGame();
@@ -3753,7 +3873,7 @@ window.addEventListener("error", function (event) {
         const targetShot = isMobileQuery.matches ? shots.mobilePenClose : shots.penClose;
         const tl = gsap.timeline({ defaults: { ease: "power3.inOut" } });
         tl.add(moveCameraTo(targetShot, isMobileQuery.matches ? 0.9 : 1.08))
-          .to(pen.rotation, { z: -0.10, duration: 0.18, yoyo: true, repeat: 1, ease: "power2.inOut" }, "-=0.22")
+          .to(pen.rotation, { z: -0.10, duration: prefersReducedMotion ? 0.01 : 0.18, yoyo: true, repeat: 1, ease: "power2.inOut" }, "-=0.22")
           .add(() => {
             mobileDeskFocus = "pen";
             animationBusy = false;
@@ -4232,7 +4352,9 @@ window.addEventListener("error", function (event) {
       window.openGame = function openGame() {
         markExplored("gamepad");
         trackEvent("game_start", { section: "game" });
-        document.getElementById("gameModal").style.display = "flex";
+        const accessibleGameModal = document.getElementById("gameModal");
+        accessibleGameModal.setAttribute("aria-hidden", "false");
+        accessibleGameModal.style.display = "flex";
         refreshDeskUI();
         resetGame();
         updateGoodDayArrow();
@@ -4240,7 +4362,9 @@ window.addEventListener("error", function (event) {
 
       window.closeGame = function closeGame() {
         if (!isMobileQuery.matches && state === "desk") syncCameraToDeskPose();
-        document.getElementById("gameModal").style.display = "none";
+        const accessibleGameModal = document.getElementById("gameModal");
+        accessibleGameModal.style.display = "none";
+        accessibleGameModal.setAttribute("aria-hidden", "true");
         refreshDeskUI();
         updateGoodDayArrow();
       };
@@ -4252,7 +4376,16 @@ window.addEventListener("error", function (event) {
           const d = document.createElement("div");
           d.className = "cell " + (val ? val.toLowerCase() : "");
           d.innerText = val;
+          d.setAttribute("role", "button");
+          d.setAttribute("tabindex", "0");
+          d.setAttribute("aria-label", "Tic-Tac-Toe cell " + (i + 1) + (val ? ", " + val : ", empty"));
           d.onclick = () => move(i);
+          d.onkeydown = (event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              move(i);
+            }
+          };
           b.appendChild(d);
         });
       };
