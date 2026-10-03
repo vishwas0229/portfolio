@@ -1,6 +1,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 
+process.env.NODE_ENV = "development";
 process.env.ADMIN_SESSION_SECRET = "unit-test-secret-that-is-long-enough-123456";
 process.env.CORS_ORIGIN = "http://localhost:8888";
 process.env.COOKIE_SECURE = "false";
