@@ -27,6 +27,10 @@ function checkRateLimit(key, limit = config.apiRateLimitMax, windowMs = config.a
   return { allowed: true, remaining, retryAfter };
 }
 
+function resetRateLimit(key) {
+  buckets.delete(key);
+}
+
 function rateLimitHeaders(result, limit = config.apiRateLimitMax) {
   return {
     "x-ratelimit-limit": String(limit),
@@ -44,4 +48,4 @@ function pruneRateLimitBuckets(maxAgeMs = 3600000) {
 
 setInterval(() => pruneRateLimitBuckets(), 15 * 60 * 1000).unref?.();
 
-module.exports = { getClientIp, checkRateLimit, rateLimitHeaders, pruneRateLimitBuckets };
+module.exports = { getClientIp, checkRateLimit, rateLimitHeaders, resetRateLimit, pruneRateLimitBuckets };
