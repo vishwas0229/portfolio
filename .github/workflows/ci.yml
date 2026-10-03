@@ -76,6 +76,15 @@ jobs:
       - name: Verify public project API
         run: curl --fail --silent http://127.0.0.1:8888/api/projects
 
+      - name: Verify seeded admin login
+        run: |
+          status=$(curl --silent --output /tmp/admin-login.json --write-out "%{http_code}"             -c /tmp/admin.cookies             -H "Origin: http://localhost:8888"             -H "Content-Type: application/json"             -d '{"email":"admin@localhost","password":"Admin@12345678"}'             http://127.0.0.1:8888/api/admin/login)
+          test "$status" = "200"
+          grep -q '"authenticated":true' /tmp/admin-login.json
+          grep -q '"csrfToken":"' /tmp/admin-login.json
+
+          curl --fail --silent             -b /tmp/admin.cookies             http://127.0.0.1:8888/api/admin/session | grep -q '"authenticated":true'
+
       - name: Verify admin account route
         run: |
           status=$(curl --silent --output /tmp/admin-account.json --write-out "%{http_code}" http://127.0.0.1:8888/api/admin/account)
