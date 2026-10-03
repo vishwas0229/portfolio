@@ -1,0 +1,75 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: rahul-portfolio-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: portfolio
+      POSTGRES_USER: portfolio
+      POSTGRES_PASSWORD: portfolio_dev
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docs/supabase.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./docs/supabase-seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U portfolio -d portfolio"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rahul-portfolio-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      HOST: 0.0.0.0
+      PORT: 8888
+
+      PORTFOLIO_SITE_URL: http://localhost:8888
+      CORS_ORIGIN: http://localhost:8888
+      COOKIE_SECURE: "false"
+
+      GITHUB_USERNAME: vishwas0229
+      LEETCODE_USERNAME: vishwas0229
+
+      DATABASE_URL: postgresql://portfolio:portfolio_dev@db:5432/portfolio
+      DATABASE_SSL: "false"
+      DB_POOL_MAX: "10"
+
+      GITHUB_CACHE_TTL_SECONDS: "300"
+      LEETCODE_CACHE_TTL_SECONDS: "300"
+      API_CACHE_STALE_SECONDS: "3600"
+      API_RATE_LIMIT_WINDOW_SECONDS: "60"
+      API_RATE_LIMIT_MAX: "60"
+
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@localhost}
+      # Local-only default password: Admin@12345678
+      ADMIN_PASSWORD_HASH: ${ADMIN_PASSWORD_HASH:-pbkdf2$sha256$210000$R6ZX5t5mJZPuovaCNoLx_A$9yfNalu_0ZGP8WkEDWKSxfizBinvZVdPNqkHqUV48M0}
+      ADMIN_SESSION_SECRET: ${ADMIN_SESSION_SECRET:-docker-local-admin-session-secret-change-me-please-32chars}
+
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_REQUIRE_TLS: ${SMTP_REQUIRE_TLS:-true}
+      SMTP_FROM: ${SMTP_FROM:-}
+      CONTACT_NOTIFICATION_EMAIL: ${CONTACT_NOTIFICATION_EMAIL:-}
+
+    ports:
+      - "127.0.0.1:8888:8888"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8888/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+volumes:
+  postgres_data:

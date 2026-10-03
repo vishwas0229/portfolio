@@ -1,0 +1,11 @@
+.git
+.github
+.netlify
+node_modules
+npm-debug.log*
+.env
+.env.*
+!.env.example
+!.env.docker.example
+docker-compose.override.yml
+.DS_Store

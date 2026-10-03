@@ -124,3 +124,91 @@ Database setup files:
 - `docs/supabase-seed.sql`
 
 Admin console: `/admin/`
+
+
+## 🐳 Docker — Local Full Stack
+
+The repository is Docker-first for local development. It runs the static portfolio, Node API runtime, and PostgreSQL database together.
+
+### Start
+
+```bash
+docker compose up --build
+```
+
+Open:
+
+```
+http://localhost:8888/
+http://localhost:8888/admin/
+http://localhost:8888/api/health
+```
+
+The Docker stack uses:
+
+- Node.js 20 application container
+- PostgreSQL 16 container
+- Persistent `postgres_data` Docker volume
+- Automatic database schema + seed initialization on first database creation
+- Native PostgreSQL access through `pg`
+- The same Netlify Function modules used by the production backend
+
+The local admin login defaults to:
+
+```
+Email: admin@localhost
+Password: Admin@12345678
+```
+
+This default is intended for localhost development only. Change the credentials before exposing the container beyond your own machine.
+
+### Useful commands
+
+```bash
+docker compose up -d --build
+docker compose ps
+docker compose logs -f app
+docker compose logs -f db
+docker compose down
+docker compose down -v
+```
+
+Use `docker compose down -v` only when you intentionally want to delete the local PostgreSQL volume and start with an empty database.
+
+### Configuration
+
+You can override Compose defaults from your shell or a local `.env` file. Examples:
+
+```env
+ADMIN_EMAIL=admin@localhost
+ADMIN_PASSWORD_HASH=<generated-with-scripts/generate-password-hash.mjs>
+ADMIN_SESSION_SECRET=<long-random-secret>
+
+SMTP_HOST=
+SMTP_PORT=587
+SMTP_USERNAME=
+SMTP_PASSWORD=
+SMTP_SECURE=false
+SMTP_REQUIRE_TLS=true
+SMTP_FROM=
+CONTACT_NOTIFICATION_EMAIL=
+```
+
+For local Docker, `DATABASE_URL`, `PORT`, and the internal PostgreSQL credentials are already wired by `docker-compose.yml`.
+
+### Architecture
+
+```
+Browser
+   │
+   ▼
+Node local runtime :8888
+   ├── /               → static portfolio
+   ├── /admin/         → admin console
+   └── /api/*          → existing Netlify Function handlers
+                      │
+                      ▼
+                 PostgreSQL :5432
+```
+
+The production deployment can continue using Netlify Functions + Supabase REST; Docker uses the same function modules with the local PostgreSQL adapter.
