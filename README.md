@@ -99,7 +99,7 @@ If you like this project, consider giving it a ⭐ on GitHub!
 
 - [DSA Problems](https://github.com/vishwas0229/DSA_Problems)
 - [e-Karamchari](https://github.com/vishwas0229/e-Karamchari) — [Live Demo](https://ekaramchari.netlify.app/)
-- [Portfolio](https://github.com/vishwas0229/portfolio) — [Live Demo](https://rahulport-folio.netlify.app/)
+- [Portfolio](https://github.com/vishwas0229/portfolio) — [Live Demo](https://portfolio.postlyfi.in/)
 
 
 ## Backend
@@ -180,6 +180,12 @@ docker compose down -v
 ```
 
 Use `docker compose down -v` only when you intentionally want to delete the local MySQL volume and start with a fresh database.
+
+For an existing MySQL volume created before admin session versioning, run the migration once:
+
+```bash
+docker compose exec -T db mysql -uportfolio -pportfolio_dev portfolio < docs/mysql-migrate.sql
+```
 
 ### Configuration
 
