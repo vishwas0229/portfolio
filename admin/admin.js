@@ -29,7 +29,7 @@ function showApp(user){
   $("currentUser").textContent=email;
   $("sidebarUser").textContent=email;
 }
-async function loadSession(){try{const d=await api("/api/admin/session");if(d.authenticated){csrfToken=d.csrfToken;showApp(d.user);await loadMessages();return true}}catch(_){}showLogin();return false}
+async function loadSession(){try{const d=await api("/api/admin/session");if(d.authenticated){csrfToken=d.csrfToken;showApp(d.user);await Promise.allSettled([loadMessages(),loadProjects(),loadCertificates(),loadAnalytics()]);return true}}catch(_){}showLogin();return false}
 
 async function loadAccount(){try{const d=await api("/api/admin/account");const account=d.data||{};$("accountEmail").value=account.email||"";$("accountStatus").textContent=""}catch(err){$("accountStatus").textContent=err.message}}
 
@@ -62,6 +62,7 @@ $("loginForm").addEventListener("submit",async e=>{
   e.preventDefault();
   clearInterval(loginCooldownTimer);
   $("loginStatus").textContent="Signing in…";
+  $("loginStatus").className="status status-info";
   const button=$('#loginForm button[type="submit"]');
   button.disabled=true;
   try{
@@ -71,13 +72,15 @@ $("loginForm").addEventListener("submit",async e=>{
     showApp(d.user);
     $("#loginPassword").value="";
     $("#loginStatus").textContent="";
-    await loadMessages();
+    $("#loginStatus").className="status";
+    await Promise.allSettled([loadMessages(),loadProjects(),loadCertificates(),loadAnalytics()]);
   }catch(err){
     if(err.status===429){
       startLoginCooldown(err.retryAfter);
     }else{
       button.disabled=false;
       $("#loginStatus").textContent=err.message;
+      $("#loginStatus").className="status status-error";
     }
   }
 });
