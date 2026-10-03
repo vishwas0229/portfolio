@@ -56,6 +56,7 @@ jobs:
           docker compose exec -T db mysql -uportfolio -pportfolio_dev portfolio -e "SHOW TABLES;"
           docker compose exec -T db mysql -uportfolio -pportfolio_dev portfolio -e "SELECT COUNT(*) AS projects FROM projects;"
           docker compose exec -T db mysql -uportfolio -pportfolio_dev portfolio -e "SELECT COUNT(*) AS certificates FROM certificates;"
+          docker compose exec -T db mysql -uportfolio -pportfolio_dev portfolio -e "SELECT COUNT(*) AS admins FROM admins WHERE role='admin' AND active=TRUE;"
 
       - name: Verify application health
         run: |
