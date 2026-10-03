@@ -3,6 +3,21 @@ const { json, options } = require("./_shared/http");
 const { getClientIp, checkRateLimit, rateLimitHeaders } = require("./_shared/rate-limit");
 const { getOrLoad } = require("./_shared/cache");
 
+async function fetchJson(url, ms = 15000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+  try {
+    const res = await fetch(url, {
+      signal: controller.signal,
+      headers: { accept: "application/json", "user-agent": "Rahul-Portfolio/1.0" }
+    });
+    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+    return await res.json();
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 function parseCalendar(raw) {
   if (!raw) return {};
   if (typeof raw === 'string') { try { return JSON.parse(raw); } catch (_) { return {}; } }
