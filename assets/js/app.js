@@ -98,6 +98,7 @@ window.addEventListener("error", function (event) {
         if (!Object.prototype.hasOwnProperty.call(explorationProgress, key)) return;
         explorationProgress[key] = true;
         updateGoodDayArrow();
+        trackEvent("section_view", { section: key });
       }
 
       function trackEvent(eventName, dimensions = {}) {
@@ -2981,7 +2982,7 @@ window.addEventListener("error", function (event) {
       }
 
       async function chooseFeedbackFolder() {
-        setFeedbackStatus("Folder download is disabled. Feedback is sent through Netlify Forms.");
+        setFeedbackStatus("Feedback is sent securely through the portfolio backend.");
       }
       async function submitFeedback(event) {
         event.preventDefault();
@@ -4365,6 +4366,7 @@ window.addEventListener("error", function (event) {
 
         if (!board.includes("")) {
           gameOver = true;
+          trackEvent("game_complete", { section: "game" });
           setTimeout(() => {
             show("\uD83D\uDE10 DRAW");
           }, 800);
