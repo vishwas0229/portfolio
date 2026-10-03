@@ -82,6 +82,19 @@ jobs:
           test "$status" = "401"
           grep -q '"error":"Authentication required."' /tmp/admin-account.json
 
+      - name: Verify feedback persistence
+        run: |
+          status=$(curl --silent --output /tmp/feedback.json --write-out "%{http_code}"             -H "Content-Type: application/json"             -d '{"name":"CI Test","email":"ci@example.com","subject":"Portfolio feedback","message":"Hello","pageUrl":"http://127.0.0.1:8888/"}'             http://127.0.0.1:8888/api/contact)
+          test "$status" = "201"
+          grep -q '"ok":true' /tmp/feedback.json
+          docker compose exec -T db mysql -N -B -uportfolio -pportfolio_dev portfolio             -e "SELECT COUNT(*) FROM contact_messages WHERE email='ci@example.com' AND message='Hello';" | grep -q '^1
+        run: docker build --tag rahul-portfolio:test .
+
+      - name: Stop Docker stack
+        if: always()
+        run: docker compose down -v
+
+
       - name: Build application image
         run: docker build --tag rahul-portfolio:test .
 
