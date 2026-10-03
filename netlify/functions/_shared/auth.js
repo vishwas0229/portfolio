@@ -141,7 +141,15 @@ async function requireAdmin(event) {
 
 function requireSameOrigin(event) {
   const origin = event?.headers?.origin || event?.headers?.Origin;
-  if (origin && origin !== config.corsOrigin) {
+  if (!origin) return;
+
+  const allowed = new Set([config.corsOrigin]);
+  if (String(process.env.NODE_ENV || "").toLowerCase() === "development") {
+    allowed.add("http://localhost:8888");
+    allowed.add("http://127.0.0.1:8888");
+  }
+
+  if (!allowed.has(origin)) {
     const error = new Error("Forbidden");
     error.statusCode = 403;
     throw error;
