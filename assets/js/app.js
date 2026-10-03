@@ -3409,7 +3409,7 @@ window.addEventListener("error", function (event) {
           const payload = await response.json();
           if (!payload.ok || !payload.data) throw new Error(payload.error || "No live data");
           const d = payload.data;
-          setLeetCodeText("leetcodeUsername", d.username || "GitHub");
+          setLeetCodeText("leetcodeUsername", d.username || "LeetCode");
           setLeetCodeText("lcTotal", d.totalSolved);
           setLeetCodeText("lcEasy", d.easySolved);
           setLeetCodeText("lcMedium", d.mediumSolved);
