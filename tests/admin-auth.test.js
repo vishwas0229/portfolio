@@ -11,6 +11,19 @@ const {
   createLoginCookies,
   getSession
 } = require("../netlify/functions/_shared/auth");
+const { validateEmail, validateAdminEmail } = require("../netlify/functions/_shared/validation");
+
+test("public email validation remains strict", () => {
+  assert.equal(validateEmail("admin@admin").ok, false);
+  assert.equal(validateEmail("admin@example.com").ok, true);
+});
+
+test("admin email validation accepts local admin addresses", () => {
+  assert.equal(validateAdminEmail("admin@admin").ok, true);
+  assert.equal(validateAdminEmail("admin@localhost").ok, true);
+  assert.equal(validateAdminEmail("admin@example.com").ok, true);
+  assert.equal(validateAdminEmail("not-an-email").ok, false);
+});
 
 test("admin password hashing is one-way and verifiable", () => {
   const encoded = hashPassword("Correct Horse Battery Staple");

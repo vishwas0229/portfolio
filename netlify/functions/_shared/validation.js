@@ -19,6 +19,22 @@ function validateEmail(value, max = 160) {
   return { ok: true, value: normalized };
 }
 
+function validateAdminEmail(value, max = 160) {
+  const normalized = trimString(value).toLowerCase();
+  const at = normalized.lastIndexOf("@");
+  const localPart = at > 0 ? normalized.slice(0, at) : "";
+  const domain = at > 0 ? normalized.slice(at + 1) : "";
+
+  const validPublic = EMAIL_RE.test(normalized);
+  const validLocal = Boolean(localPart) && /^[a-z0-9](?:[a-z0-9._+-]*[a-z0-9])?$/i.test(localPart)
+    && /^(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)$/i.test(domain);
+
+  if (!normalized || normalized.length > max || (!validPublic && !validLocal)) {
+    return { ok: false, error: "Please provide a valid admin email address." };
+  }
+  return { ok: true, value: normalized };
+}
+
 function isHoneypotFilled(value) {
   return trimString(value).length > 0;
 }
@@ -68,4 +84,4 @@ function readJsonBody(event, maxBytes = 16384) {
   }
 }
 
-module.exports = { trimString, validateString, validateEmail, validateUrl, validateStringArray, isHoneypotFilled, readJsonBody };
+module.exports = { trimString, validateString, validateEmail, validateAdminEmail, validateUrl, validateStringArray, isHoneypotFilled, readJsonBody };

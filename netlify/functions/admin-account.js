@@ -1,5 +1,5 @@
 const { json, options } = require("./_shared/http");
-const { readJsonBody, validateEmail, validateString } = require("./_shared/validation");
+const { readJsonBody, validateAdminEmail, validateString } = require("./_shared/validation");
 const {
   hashPassword,
   verifyPassword,
@@ -72,7 +72,7 @@ exports.handler = async (event) => {
 
     let newEmail = admin.email;
     if (emailRequested) {
-      const email = validateEmail(payload.email, 160);
+      const email = validateAdminEmail(payload.email, 160);
       if (!email.ok) return json(422, { ok: false, error: email.error }, event);
       newEmail = email.value;
     }
