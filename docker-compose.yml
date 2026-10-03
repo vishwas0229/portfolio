@@ -64,7 +64,7 @@ services:
     ports:
       - "127.0.0.1:8888:8888"
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8888/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8888/api/health?deep=1').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 10s
       timeout: 5s
       retries: 12
