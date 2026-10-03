@@ -78,9 +78,13 @@ exports.handler = async (event) => {
   try {
     const id = pathId(event);
     if (event.httpMethod === "GET") {
+      const adminList = event.queryStringParameters?.admin === "1";
+      if (adminList) requireAdmin(event);
       const query = id
-        ? `?select=*&slug=eq.${encodeURIComponent(id)}&published=eq.true&limit=1`
-        : "?select=*&published=eq.true&order=display_order.asc,created_at.desc";
+        ? `?select=*&slug=eq.${encodeURIComponent(id)}${adminList ? "" : "&published=eq.true"}&limit=1`
+        : (adminList
+          ? "?select=*&order=display_order.asc,created_at.desc"
+          : "?select=*&published=eq.true&order=display_order.asc,created_at.desc");
       const rows = await list("projects", query);
       if (id) {
         if (!rows?.[0]) return json(404, { ok: false, error: "Project not found." }, event);
