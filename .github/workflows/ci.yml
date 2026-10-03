@@ -87,6 +87,11 @@ jobs:
           test -n "$session_cookie"
           decoded=$(docker compose exec -T app node -e 'const {getSession}=require("./netlify/functions/_shared/auth"); const s=getSession({headers:{cookie:"portfolio_admin_session="+process.argv[1]}}); process.stdout.write(s ? "VALID" : "INVALID")' "$session_cookie" | tr -d '\r\n')
           test "$decoded" = "VALID"
+          authorized=$(docker compose exec -T app node -e 'const fs=require("fs"); const {requireAdmin}=require("./netlify/functions/_shared/auth"); const cookie=process.argv[1]; requireAdmin({headers:{cookie:"portfolio_admin_session="+cookie}}).then(()=>process.stdout.write("AUTHORIZED")).catch(()=>process.stdout.write("DENIED"))' "$session_cookie" | tr -d '\r\n')
+          test "$authorized" = "AUTHORIZED"
+          manual_status=$(curl --silent --output /tmp/admin-session-manual.json --write-out "%{http_code}"             -H "Cookie: portfolio_admin_session=$session_cookie"             http://127.0.0.1:8888/api/admin/session)
+          test "$manual_status" = "200"
+          grep -q '"authenticated":true' /tmp/admin-session-manual.json
           curl --silent --show-error --fail             -b /tmp/admin.cookies             http://127.0.0.1:8888/api/admin/session > /tmp/admin-session.json
           grep -q '"authenticated":true' /tmp/admin-session.json
 
