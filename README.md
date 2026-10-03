@@ -112,7 +112,7 @@ The portfolio now includes a serverless Node.js backend on Netlify Functions.
 - `GET /api/certificates` — published certificates
 - `POST /api/contact` — validated contact submission with database persistence and optional SMTP notification
 - `POST /api/analytics` — privacy-conscious event ingestion
-- `/api/admin/*` — authenticated admin operations for messages, projects, certificates and analytics
+- `/api/admin/*` — authenticated admin operations for messages, projects, certificates, analytics and account settings
 
 ### Data & security
 
@@ -127,6 +127,8 @@ Database setup files:
 - `docs/mysql-seed.sql`
 
 Admin console: `/admin/`
+
+The **Account** tab lets the signed-in admin change the email/password stored in MySQL. The current password is required for every credential change, the new password is stored only as a PBKDF2 hash, and older sessions are invalidated.
 
 
 ## 🐳 Docker — Local Full Stack
