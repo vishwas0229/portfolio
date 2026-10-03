@@ -7887,3 +7887,34 @@
 
 /* v19: removed legacy GitHub profile calendar/top-repository blocks */
 .github-repo-bars { display:none !important; }
+
+
+/* Accessibility: keep keyboard focus visible and honor users who request less motion. */
+.click-target:focus-visible,
+.close-btn-main:focus-visible,
+.feedback-close:focus-visible,
+.mobile-nav-arrow:focus-visible,
+.goodday-trigger:focus-visible,
+.primary-btn:focus-visible,
+.mini-action:focus-visible,
+.close-btn:focus-visible,
+.game-box .btn:focus-visible,
+.cell[tabindex]:focus-visible {
+  outline: 3px solid rgba(132, 223, 255, 0.95);
+  outline-offset: 3px;
+}
+
+.cell[tabindex] {
+  cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
