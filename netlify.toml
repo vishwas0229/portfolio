@@ -9,3 +9,78 @@
   to = "/.netlify/functions/health"
   status = 200
   force = true
+
+[[redirects]]
+  from = "/api/contact"
+  to = "/.netlify/functions/contact"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/projects"
+  to = "/.netlify/functions/projects"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/projects/*"
+  to = "/.netlify/functions/projects"
+  status = 200
+  force = true
+  query = {slug = ":splat"}
+
+[[redirects]]
+  from = "/api/certificates"
+  to = "/.netlify/functions/certificates"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/certificates/*"
+  to = "/.netlify/functions/certificates"
+  status = 200
+  force = true
+  query = {id = ":splat"}
+
+[[redirects]]
+  from = "/api/admin/login"
+  to = "/.netlify/functions/admin-login"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/admin/logout"
+  to = "/.netlify/functions/admin-logout"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/admin/session"
+  to = "/.netlify/functions/admin-session"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/admin/messages"
+  to = "/.netlify/functions/admin-messages"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/admin/messages/*"
+  to = "/.netlify/functions/admin-messages"
+  status = 200
+  force = true
+  query = {id = ":splat"}
+
+[[redirects]]
+  from = "/api/admin/analytics"
+  to = "/.netlify/functions/admin-analytics"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/analytics"
+  to = "/.netlify/functions/analytics"
+  status = 200
+  force = true
