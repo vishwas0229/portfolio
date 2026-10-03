@@ -548,9 +548,9 @@ Get best experience on desktop.</span>
     </section>
 
     <section class="modal" id="leetcodeModal" aria-hidden="true">
-      <div class="simple-panel leetcode-panel">
+      <div class="simple-panel leetcode-panel" role="dialog" aria-modal="true" aria-labelledby="leetcodeModalTitle">
         <div class="modal-top dashboard-modal-top">
-          <div class="modal-title"><strong>LeetCode</strong><span>Live profile progress and submission activity</span></div>
+          <div class="modal-title"><strong id="leetcodeModalTitle">LeetCode</strong><span>Live profile progress and submission activity</span></div>
           <div class="dashboard-header-actions">
             <button class="mini-action" id="leetcodeRefreshBtn" type="button">Refresh</button>
             <a class="mini-action" href="https://leetcode.com/u/vishwas0229/" target="_blank" rel="noopener">Open LeetCode</a>
@@ -601,10 +601,10 @@ Get best experience on desktop.</span>
       </div>
     </section>
 
-    <div class="game-modal" id="gameModal">
-      <div class="game-box">
-        <div class="close-btn" onclick="closeGame()">&times;</div>
-        <div class="game-title">Tic-Tac-Toe</div>
+    <div class="game-modal" id="gameModal" role="dialog" aria-modal="true" aria-labelledby="gameModalTitle" aria-hidden="true">
+      <div class="game-box" tabindex="-1">
+        <button class="close-btn" id="closeGameBtn" type="button" aria-label="Close Tic-Tac-Toe game" onclick="closeGame()">&times;</button>
+        <div class="game-title" id="gameModalTitle">Tic-Tac-Toe</div>
         <div class="game-hud">
           <span>You: X</span>
           <select id="difficulty" class="select">
@@ -616,7 +616,7 @@ Get best experience on desktop.</span>
         <div class="bottom-controls">
           <button class="btn" onclick="resetGame()">Restart</button>
         </div>
-        <div id="winPopup"></div>
+        <div id="winPopup" role="status" aria-live="polite"></div>
       </div>
     </div>
 
