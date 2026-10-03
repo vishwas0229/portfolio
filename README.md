@@ -107,7 +107,8 @@ If you like this project, consider giving it a ⭐ on GitHub!
 The portfolio now includes a serverless Node.js backend on Netlify Functions.
 
 ### API
-- `GET /api/health` — health/status
+- `GET /api/health` — lightweight API health
+- `GET /api/health?deep=1` — API + MySQL connectivity/readiness check
 - `GET /api/projects` — published projects
 - `GET /api/certificates` — published certificates
 - `POST /api/contact` — validated contact submission with database persistence and optional SMTP notification
@@ -154,6 +155,7 @@ The Docker stack uses:
 - Node.js 20 application container
 - MySQL 8.4.11 container
 - Persistent `mysql_data` Docker volume
+- Deep application healthcheck that verifies MySQL connectivity
 - Automatic MySQL schema + seed initialization on first database creation
 - Native MySQL access through `mysql2`
 - The same backend function modules used by the production runtime

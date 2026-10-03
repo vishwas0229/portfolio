@@ -7,7 +7,7 @@ const TABLE_COLUMNS = Object.freeze({
   certificates: ["id","title","issuer","issued_on","credential_url","image_url","description","display_order","published","created_at","updated_at"],
   contact_messages: ["id","name","email","subject","message","page_url","status","email_status","email_error","created_at","read_at","archived_at"],
   analytics_events: ["id","event_name","event_date","section","project_slug","metadata","created_at"],
-  admins: ["id","email","password_hash","role","active","created_at","updated_at"]
+  admins: ["id","email","password_hash","role","active","session_version","created_at","updated_at"]
 });
 
 const JSON_COLUMNS = new Set(["tech_stack","metadata"]);
@@ -152,6 +152,11 @@ function prepareRecord(table, row) {
   return out;
 }
 
+async function ping() {
+  await getPool().query("SELECT 1 AS ok");
+  return true;
+}
+
 async function list(table, query = "") {
   const parsed = parseQuery(table, query);
   const sql = "SELECT " + parsed.selectSql + " FROM " + table + parsed.whereSql + parsed.orderSql + parsed.limitSql;
@@ -207,4 +212,4 @@ async function remove(table, query) {
   return [{ affectedRows: result.affectedRows }];
 }
 
-module.exports = { config, list, insert, update, remove, getDatabaseUrl, parseQuery };
+module.exports = { config, ping, list, insert, update, remove, getDatabaseUrl, parseQuery };
