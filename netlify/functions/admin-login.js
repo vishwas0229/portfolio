@@ -1,7 +1,7 @@
 const { json, options } = require("./_shared/http");
 const { readJsonBody, validateAdminEmail } = require("./_shared/validation");
 const { checkRateLimit, getClientIp, rateLimitHeaders, resetRateLimit } = require("./_shared/rate-limit");
-const { verifyPassword, createLoginCookies, requireSameOrigin, SESSION_TTL_SECONDS } = require("./_shared/auth");
+const { verifyPassword, createLoginSession, requireSameOrigin, SESSION_TTL_SECONDS } = require("./_shared/auth");
 const { list } = require("./_shared/db");
 
 exports.handler = async (event) => {
@@ -43,13 +43,16 @@ exports.handler = async (event) => {
     }
 
     resetRateLimit(rateKey);
+    const authSession = createLoginSession(admin.email, admin.session_version);
 
     return json(200, {
       ok: true,
+      authenticated: true,
       user: { email: admin.email, role: admin.role },
+      csrfToken: authSession.csrf,
       expiresIn: SESSION_TTL_SECONDS
     }, event, {
-      "set-cookie": createLoginCookies(admin.email, admin.session_version),
+      "set-cookie": authSession.cookies,
       "cache-control": "no-store"
     });
   } catch (error) {
