@@ -236,7 +236,7 @@ Get best experience on desktop.</span>
           <button class="feedback-close" id="closeFeedbackBtn" type="button" aria-label="Close feedback box">&times;</button>
         </div>
 
-        <form class="feedback-form" id="feedbackForm" name="portfolio-feedback" method="POST" data-netlify="true" netlify-honeypot="bot-field" action="/">
+        <form class="feedback-form" id="feedbackForm" name="portfolio-feedback" method="POST" action="/api/contact">
           <input type="hidden" id="feedbackFormName" name="form-name" value="portfolio-feedback" />
           <p hidden><label>Do not fill this out: <input name="bot-field" /></label></p>
           <div class="feedback-chat-area" aria-live="polite">
@@ -399,7 +399,8 @@ Get best experience on desktop.</span>
 
                   <section class="section-card">
                     <div class="section-title"><span class="icon"><i class="fa-solid fa-code-branch"></i></span> GitHub Projects</div>
-                    <div class="project-grid">
+                    <p id="projectsApiStatus" role="status" aria-live="polite" style="margin:0 0 10px;color:rgba(220,235,245,.62);font-size:.82rem">Loading project data…</p>
+                    <div class="project-grid" id="dynamicProjectGrid">
                       <div class="project-card">
                         <h4>DSA Problems</h4>
                         <ul>
@@ -436,7 +437,8 @@ Get best experience on desktop.</span>
 
                   <section class="section-card">
                     <div class="section-title"><span class="icon"><i class="fa-solid fa-certificate"></i></span> Certifications &amp; Training</div>
-                    <ul class="cert-list">
+                    <p id="certificatesApiStatus" role="status" aria-live="polite" style="margin:0 0 10px;color:rgba(220,235,245,.62);font-size:.82rem">Loading certificate data…</p>
+                    <ul class="cert-list" id="dynamicCertificateList">
                       <li><strong>Diploma in Computer Applications</strong><span class="cert-desc">Certification · Delhi Institute of Computer Education, New Delhi · CGPA: 9.857</span></li>
                       <li><strong>5-Day AI Agents Intensive Course with Google</strong><span class="cert-desc">Kaggle &times; Google AI Agents intensive course / badge.</span></li>
                       <li><strong>React Native Course &ndash; Tutedude</strong><span class="cert-desc">Successfully completed the React Native course on 9 June 2026.</span></li>
@@ -533,7 +535,7 @@ Get best experience on desktop.</span>
             </section>
           </div>
         </section>
-        <div class="project-showcase-grid">
+        <div class="project-showcase-grid" id="dynamicShowcaseGrid">
           <article class="showcase-project-card">
             <h3>DSA Problems</h3>
             <p>C programming and Data Structures &amp; Algorithms practice covering arrays, sorting/searching, linked lists, stacks, and student records.</p>
