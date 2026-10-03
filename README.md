@@ -20,7 +20,7 @@ Inspired by indie game-style environments, every object in the scene has a purpo
 - 🤖 Smart AI opponent for engaging gameplay  
 - 📄 "Simple View" mode for clean resume experience  
 - 📱 Optimized mobile experience with custom camera angles  
-- 💬 Feedback system using Netlify Forms  
+- 💬 MySQL-backed contact and feedback system  
 
 ---
 
@@ -43,7 +43,7 @@ While building this project, I focused on:
 - GSAP (Animations)  
 - Font Awesome  
 - Google Fonts  
-- Netlify Forms  
+- Node.js + MySQL  
 
 ---
 
