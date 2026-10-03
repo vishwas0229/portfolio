@@ -7,7 +7,7 @@ exports.handler = async (event) => {
   if (event.httpMethod !== "GET") return json(405, { ok: false, error: "Method not allowed" }, event, { allow: "GET, OPTIONS" });
 
   try {
-    requireAdmin(event);
+    await requireAdmin(event);
 
     const daysRaw = Number(event.queryStringParameters?.days || 30);
     const days = Math.min(Math.max(Number.isFinite(daysRaw) ? Math.floor(daysRaw) : 30, 1), 90);

@@ -50,9 +50,6 @@ services:
       API_RATE_LIMIT_WINDOW_SECONDS: "60"
       API_RATE_LIMIT_MAX: "60"
 
-      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@localhost}
-      # Local-only default password: Admin@12345678
-      ADMIN_PASSWORD_HASH: ${ADMIN_PASSWORD_HASH:-pbkdf2$$sha256$$210000$$R6ZX5t5mJZPuovaCNoLx_A$$9yfNalu_0ZGP8WkEDWKSxfizBinvZVdPNqkHqUV48M0}
       ADMIN_SESSION_SECRET: ${ADMIN_SESSION_SECRET:-docker-local-admin-session-secret-change-me-please-32chars}
 
       SMTP_HOST: ${SMTP_HOST:-}
