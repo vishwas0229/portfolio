@@ -29,7 +29,7 @@ async function loadAccount(){try{const d=await api("/api/admin/account");const a
 
 let loginCooldownTimer=null;
 function formatCooldown(seconds){
-  const total=Math.max(1,Number(seconds)||1);
+  const total=Math.max(0,Number(seconds)||0);
   const minutes=Math.floor(total/60);
   const secs=total%60;
   return minutes>0 ? (minutes+"m "+String(secs).padStart(2,"0")+"s") : (secs+"s");
@@ -40,13 +40,13 @@ function startLoginCooldown(seconds){
   const button=$('#loginForm button[type="submit"]');
   button.disabled=true;
   const tick=()=>{
-    $("loginStatus").textContent="Too many login attempts. Try again in "+formatCooldown(remaining)+".";
     if(remaining<=0){
       clearInterval(loginCooldownTimer);
       button.disabled=false;
       $("loginStatus").textContent="You can try signing in again.";
       return;
     }
+    $("loginStatus").textContent="Too many login attempts. Try again in "+formatCooldown(remaining)+".";
     remaining-=1;
   };
   tick();
