@@ -34,7 +34,7 @@ exports.handler = async (event) => {
     const name = validateString(payload.name, { field: "name", min: 2, max: 70 });
     const email = validateEmail(payload.email, 160);
     const subject = validateString(payload.subject || "", { field: "subject", min: 0, max: 160 });
-    const message = validateString(payload.message, { field: "message", min: 8, max: 1400 });
+    const message = validateString(payload.message, { field: "message", min: 2, max: 1400 });
     const pageUrl = validateString(payload.pageUrl || "", { field: "pageUrl", min: 0, max: 500 });
 
     const errors = {};
