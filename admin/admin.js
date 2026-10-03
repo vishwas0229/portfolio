@@ -79,20 +79,20 @@ $("loginForm").addEventListener("submit",async e=>{
   const button=document.querySelector('#loginForm button[type="submit"]');
   button.disabled=true;
   try{
-    const d=await api("/api/admin/login",{method:"POST",body:JSON.stringify({email:$("#loginEmail").value,password:$("#loginPassword").value})});
+    const d=await api("/api/admin/login",{method:"POST",body:JSON.stringify({email:$("loginEmail").value,password:$("loginPassword").value})});
     csrfToken=d.csrfToken||"";
     showApp(d.user);
-    $("#loginPassword").value="";
-    $("#loginStatus").textContent="";
-    $("#loginStatus").className="status";
+    $("loginPassword").value="";
+    $("loginStatus").textContent="";
+    $("loginStatus").className="status";
     await Promise.allSettled([loadMessages(),loadProjects(),loadCertificates(),loadAnalytics()]);
   }catch(err){
     if(err.status===429){
       startLoginCooldown(err.retryAfter);
     }else{
       button.disabled=false;
-      $("#loginStatus").textContent=err.message;
-      $("#loginStatus").className="status status-error";
+      $("loginStatus").textContent=err.message;
+      $("loginStatus").className="status status-error";
     }
   }
 });
