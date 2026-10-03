@@ -20,6 +20,9 @@ jobs:
         with:
           node-version: 20
 
+      - name: Install Node dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund
+
       - name: Check JavaScript syntax
         run: |
           node --check assets/js/app.js
@@ -31,7 +34,7 @@ jobs:
           done
 
       - name: Run backend tests
-        run: node --test tests/backend-foundation.test.js
+        run: npm test
 
       - name: Validate site metadata and deployment files
         run: node scripts/validate-site.mjs

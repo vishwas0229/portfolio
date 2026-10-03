@@ -100,3 +100,27 @@ If you like this project, consider giving it a ⭐ on GitHub!
 - [DSA Problems](https://github.com/vishwas0229/DSA_Problems)
 - [e-Karamchari](https://github.com/vishwas0229/e-Karamchari) — [Live Demo](https://ekaramchari.netlify.app/)
 - [Portfolio](https://github.com/vishwas0229/portfolio) — [Live Demo](https://rahulport-folio.netlify.app/)
+
+
+## Backend
+
+The portfolio now includes a serverless Node.js backend on Netlify Functions.
+
+### API
+- `GET /api/health` — health/status
+- `GET /api/projects` — published projects
+- `GET /api/certificates` — published certificates
+- `POST /api/contact` — validated contact submission with database persistence and optional SMTP notification
+- `POST /api/analytics` — privacy-conscious event ingestion
+- `/api/admin/*` — authenticated admin operations for messages, projects, certificates and analytics
+
+### Data & security
+Supabase/PostgreSQL is used for persistent data. The service-role key, SMTP credentials, admin password hash and session secret are server-side environment variables only.
+
+Admin sessions use signed HttpOnly cookies plus a CSRF token. Public write endpoints use input validation, honeypot support and rate limiting.
+
+Database setup files:
+- `docs/supabase.sql`
+- `docs/supabase-seed.sql`
+
+Admin console: `/admin/`

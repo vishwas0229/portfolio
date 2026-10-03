@@ -23,6 +23,31 @@ function isHoneypotFilled(value) {
   return trimString(value).length > 0;
 }
 
+function validateUrl(value, { field, required = false, max = 500 } = {}) {
+  const normalized = trimString(value);
+  if (!normalized && !required) return { ok: true, value: null };
+  if (!normalized || normalized.length > max) return { ok: false, error: required ? `${field} is required.` : `${field} is too long.` };
+  try {
+    const url = new URL(normalized);
+    if (!["http:", "https:"].includes(url.protocol)) throw new Error();
+    return { ok: true, value: url.toString() };
+  } catch (_) {
+    return { ok: false, error: `${field} must be a valid HTTP(S) URL.` };
+  }
+}
+
+function validateStringArray(value, { field, maxItems = 20, itemMax = 60 } = {}) {
+  if (value == null) return { ok: true, value: [] };
+  if (!Array.isArray(value) || value.length > maxItems) return { ok: false, error: `${field} must be a short list.` };
+  const out = [];
+  for (const item of value) {
+    const normalized = trimString(item);
+    if (!normalized || normalized.length > itemMax) return { ok: false, error: `${field} contains an invalid item.` };
+    out.push(normalized);
+  }
+  return { ok: true, value: [...new Set(out)] };
+}
+
 function readJsonBody(event, maxBytes = 16384) {
   const body = event?.body || "";
   const raw = event?.isBase64Encoded ? Buffer.from(body, "base64").toString("utf8") : String(body);
@@ -43,4 +68,4 @@ function readJsonBody(event, maxBytes = 16384) {
   }
 }
 
-module.exports = { trimString, validateString, validateEmail, isHoneypotFilled, readJsonBody };
+module.exports = { trimString, validateString, validateEmail, validateUrl, validateStringArray, isHoneypotFilled, readJsonBody };

@@ -98,7 +98,22 @@ window.addEventListener("error", function (event) {
         if (!Object.prototype.hasOwnProperty.call(explorationProgress, key)) return;
         explorationProgress[key] = true;
         updateGoodDayArrow();
+        trackEvent("section_view", { section: key });
       }
+
+      function trackEvent(eventName, dimensions = {}) {
+        if (!eventName) return;
+        const payload = { event: eventName };
+        if (dimensions.section) payload.section = String(dimensions.section).slice(0, 80);
+        if (dimensions.projectSlug) payload.projectSlug = String(dimensions.projectSlug).slice(0, 100);
+        fetch("/api/analytics", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Accept": "application/json" },
+          body: JSON.stringify(payload),
+          keepalive: true
+        }).catch(() => {});
+      }
+
 
       function resetExplorationProgress() {
         Object.keys(explorationProgress).forEach((key) => {
@@ -2967,11 +2982,10 @@ window.addEventListener("error", function (event) {
       }
 
       async function chooseFeedbackFolder() {
-        setFeedbackStatus("Folder download is disabled. Feedback is sent through Netlify Forms.");
+        setFeedbackStatus("Feedback is sent securely through the portfolio backend.");
       }
       async function submitFeedback(event) {
         event.preventDefault();
-
         if (!feedbackForm) return;
 
         const message = (feedbackText && feedbackText.value.trim()) || "";
@@ -2997,54 +3011,42 @@ window.addEventListener("error", function (event) {
           return;
         }
 
-        const createdAt = new Date().toISOString();
-        const pageInput = document.getElementById("feedbackPage");
-        const createdAtInput = document.getElementById("feedbackCreatedAt");
-        if (pageInput) pageInput.value = window.location.href;
-        if (createdAtInput) createdAtInput.value = createdAt;
-
-        // Use the actual Netlify form fields so the submission stays in sync
-        // with the form that Netlify detects during deployment.
-        const formData = new URLSearchParams();
-        const fields = new FormData(feedbackForm);
-        fields.forEach((value, key) => {
-          if (typeof value === "string") formData.append(key, value);
-        });
-        formData.set("form-name", "portfolio-feedback");
-        formData.set("name", name);
-        formData.set("email", email);
-        formData.set("message", message);
-        formData.set("page", window.location.href);
-        formData.set("createdAt", createdAt);
-
         const submitBtn = document.getElementById("saveFeedbackBtn");
         try {
           if (submitBtn) submitBtn.disabled = true;
           setFeedbackStatus("Sending feedback...");
 
-          const endpoint = feedbackForm.getAttribute("action") || "/";
-          const response = await fetch(endpoint, {
+          const response = await fetch("/api/contact", {
             method: "POST",
             headers: {
-              "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
-              "Accept": "application/json, text/plain, */*"
+              "Content-Type": "application/json",
+              "Accept": "application/json"
             },
-            credentials: "same-origin",
-            body: formData.toString()
+            body: JSON.stringify({
+              name,
+              email,
+              subject: "Portfolio feedback",
+              message,
+              pageUrl: window.location.href,
+              website: ""
+            })
           });
 
+          let payload = null;
+          try { payload = await response.json(); } catch (_) {}
+
           if (!response.ok) {
-            const responseText = await response.text().catch(() => "");
-            throw new Error(`Netlify Forms returned HTTP ${response.status}${responseText ? `: ${responseText.slice(0, 160)}` : ""}`);
+            throw new Error(payload?.error || "Feedback could not be submitted.");
           }
 
           markExplored("feedback");
-          setFeedbackStatus("Thanks for your valuable feedback (\u2713).");
+          trackEvent("contact_submit", { section: "feedback" });
+          setFeedbackStatus("Thanks for your valuable feedback (✓).");
           showToast("Feedback sent.", 1900);
           feedbackForm.reset();
         } catch (error) {
           console.error("Feedback submission error:", error);
-          setFeedbackStatus("Feedback could not be submitted. Please try again.", true);
+          setFeedbackStatus(error?.message || "Feedback could not be submitted. Please try again.", true);
         } finally {
           if (submitBtn) submitBtn.disabled = false;
         }
@@ -3054,6 +3056,7 @@ window.addEventListener("error", function (event) {
         if (!feedbackModal || animationBusy || feedbackModal.classList.contains("active")) return;
         if (!options.skipDeskSync && !isMobileQuery.matches && state === "desk") syncCameraToDeskPose();
         markExplored("pen");
+        trackEvent("contact_start", { section: "feedback" });
         fileTarget.classList.remove("active");
         controllerTarget.classList.remove("active");
         penTarget.classList.remove("active");
@@ -3165,6 +3168,187 @@ window.addEventListener("error", function (event) {
           });
       }
 
+
+      document.addEventListener("click", (event) => {
+        const link = event.target.closest && event.target.closest("a");
+        if (!link) return;
+        const card = link.closest(".project-card, .showcase-project-card");
+        if (!card) return;
+        const text = String(link.textContent || "").toLowerCase();
+        const slug = card.dataset.projectSlug || "";
+        if (text.includes("demo")) trackEvent("demo_click", { section: "projects", projectSlug: slug });
+        else if (text.includes("github") || text.includes("repository")) trackEvent("repo_click", { section: "projects", projectSlug: slug });
+        else trackEvent("project_click", { section: "projects", projectSlug: slug });
+      });
+
+      function createSafeLink(label, url) {
+        if (!url) return null;
+        try {
+          const parsed = new URL(url, window.location.origin);
+          if (!["http:", "https:"].includes(parsed.protocol)) return null;
+          const link = document.createElement("a");
+          link.href = parsed.href;
+          link.target = "_blank";
+          link.rel = "noopener noreferrer";
+          link.textContent = label;
+          return link;
+        } catch (_) {
+          return null;
+        }
+      }
+
+      function renderDynamicProjects(rows) {
+        const grid = document.getElementById("dynamicProjectGrid");
+        const showcase = document.getElementById("dynamicShowcaseGrid");
+        const status = document.getElementById("projectsApiStatus");
+        if (!grid) return;
+        const list = Array.isArray(rows) ? rows : [];
+
+        if (!list.length) {
+          if (status) status.textContent = "No published project records are available yet.";
+          return;
+        }
+
+        grid.innerHTML = "";
+        if (showcase) showcase.innerHTML = "";
+
+        list.forEach((project) => {
+          const slug = String(project.slug || "");
+          const card = document.createElement("div");
+          card.className = "project-card";
+          card.dataset.projectSlug = slug;
+
+          const title = document.createElement("h4");
+          title.textContent = project.title || "Untitled project";
+
+          const listNode = document.createElement("ul");
+          const summary = document.createElement("li");
+          summary.textContent = project.summary || "";
+          listNode.appendChild(summary);
+
+          if (project.description) {
+            const description = document.createElement("li");
+            description.textContent = project.description;
+            listNode.appendChild(description);
+          }
+
+          const tech = document.createElement("li");
+          const strong = document.createElement("strong");
+          strong.textContent = "Tech:";
+          tech.appendChild(strong);
+          tech.appendChild(document.createTextNode(" " + (Array.isArray(project.tech_stack) ? project.tech_stack.join(", ") : "")));
+          listNode.appendChild(tech);
+
+          const meta = document.createElement("div");
+          meta.className = "project-meta";
+          (Array.isArray(project.tech_stack) ? project.tech_stack : []).slice(0, 8).forEach((item) => {
+            const tag = document.createElement("span");
+            tag.textContent = item;
+            meta.appendChild(tag);
+          });
+
+          const links = document.createElement("p");
+          links.className = "project-links";
+          const repo = createSafeLink("GitHub", project.repository_url);
+          const demo = createSafeLink("Live Demo", project.demo_url);
+          if (repo) links.appendChild(repo);
+          if (repo && demo) links.appendChild(document.createTextNode(" • "));
+          if (demo) links.appendChild(demo);
+
+          card.append(title, listNode, meta, links);
+          grid.appendChild(card);
+
+          if (showcase) {
+            const showcaseCard = document.createElement("article");
+            showcaseCard.className = "showcase-project-card";
+            showcaseCard.dataset.projectSlug = slug;
+            const h3 = document.createElement("h3");
+            h3.textContent = project.title || "Untitled project";
+            const p = document.createElement("p");
+            p.textContent = project.summary || project.description || "";
+            const showcaseLinks = document.createElement("div");
+            showcaseLinks.className = "showcase-links";
+            const sr = createSafeLink("GitHub Repository", project.repository_url);
+            const sd = createSafeLink("Live Demo", project.demo_url);
+            if (sr) showcaseLinks.appendChild(sr);
+            if (sr && sd) showcaseLinks.appendChild(document.createTextNode(" "));
+            if (sd) showcaseLinks.appendChild(sd);
+            showcaseCard.append(h3, p, showcaseLinks);
+            showcase.appendChild(showcaseCard);
+          }
+        });
+
+        if (status) status.textContent = "Live projects loaded.";
+      }
+
+      function renderDynamicCertificates(rows) {
+        const list = document.getElementById("dynamicCertificateList");
+        const status = document.getElementById("certificatesApiStatus");
+        if (!list) return;
+        const items = Array.isArray(rows) ? rows : [];
+        if (!items.length) {
+          if (status) status.textContent = "No published certificate records are available yet.";
+          return;
+        }
+
+        list.innerHTML = "";
+        items.forEach((certificate) => {
+          const li = document.createElement("li");
+          const title = document.createElement("strong");
+          title.textContent = certificate.title || "Certificate";
+          const desc = document.createElement("span");
+          desc.className = "cert-desc";
+          const detail = [certificate.issuer || "", certificate.issued_on || "", certificate.description || ""].filter(Boolean).join(" · ");
+          desc.textContent = detail || "Certificate record";
+          li.append(title, desc);
+          if (certificate.credential_url) {
+            const link = createSafeLink("View credential", certificate.credential_url);
+            if (link) {
+              link.style.display = "inline-block";
+              li.appendChild(link);
+            }
+          }
+          list.appendChild(li);
+        });
+
+        if (status) status.textContent = "Live certificates loaded.";
+      }
+
+      async function loadPortfolioContent() {
+        const projectStatus = document.getElementById("projectsApiStatus");
+        const certStatus = document.getElementById("certificatesApiStatus");
+        try {
+          const [projectsResponse, certificatesResponse] = await Promise.all([
+            fetch("/api/projects", { cache: "no-store" }),
+            fetch("/api/certificates", { cache: "no-store" })
+          ]);
+
+          if (projectsResponse.ok) {
+            const projectPayload = await projectsResponse.json();
+            if (projectPayload.ok && Array.isArray(projectPayload.data)) {
+              renderDynamicProjects(projectPayload.data);
+            } else if (projectStatus) {
+              projectStatus.textContent = "Live project data is unavailable; showing local project content.";
+            }
+          } else if (projectStatus) {
+            projectStatus.textContent = "Live project data is unavailable; showing local project content.";
+          }
+
+          if (certificatesResponse.ok) {
+            const certificatePayload = await certificatesResponse.json();
+            if (certificatePayload.ok && Array.isArray(certificatePayload.data)) {
+              renderDynamicCertificates(certificatePayload.data);
+            } else if (certStatus) {
+              certStatus.textContent = "Live certificate data is unavailable; showing local certificate content.";
+            }
+          } else if (certStatus) {
+            certStatus.textContent = "Live certificate data is unavailable; showing local certificate content.";
+          }
+        } catch (_) {
+          if (projectStatus) projectStatus.textContent = "Live project data is unavailable; showing local project content.";
+          if (certStatus) certStatus.textContent = "Live certificate data is unavailable; showing local certificate content.";
+        }
+      }
 
       function setGitHubText(id, value) {
         const el = document.getElementById(id);
@@ -4047,6 +4231,7 @@ window.addEventListener("error", function (event) {
 
       window.openGame = function openGame() {
         markExplored("gamepad");
+        trackEvent("game_start", { section: "game" });
         document.getElementById("gameModal").style.display = "flex";
         refreshDeskUI();
         resetGame();
@@ -4183,6 +4368,7 @@ window.addEventListener("error", function (event) {
           let [a, b, c] = p;
           if (board[a] && board[a] === board[b] && board[a] === board[c]) {
             gameOver = true;
+            trackEvent("game_complete", { section: "game" });
             setTimeout(() => {
               show(board[a] === "X" ? "\uD83C\uDF89 YOU WIN!" : "\uD83E\uDD16 AI WINS");
             }, 800);
@@ -4192,6 +4378,7 @@ window.addEventListener("error", function (event) {
 
         if (!board.includes("")) {
           gameOver = true;
+          trackEvent("game_complete", { section: "game" });
           setTimeout(() => {
             show("\uD83D\uDE10 DRAW");
           }, 800);
@@ -4225,4 +4412,6 @@ window.addEventListener("error", function (event) {
       const resetGame = window.resetGame;
 
       render();
+      loadPortfolioContent();
+      trackEvent("visit", { section: "portfolio" });
     });
