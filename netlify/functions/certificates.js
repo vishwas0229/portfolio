@@ -60,7 +60,7 @@ exports.handler = async (event) => {
     const id = pathId(event);
     if (event.httpMethod === "GET") {
       const adminList = event.queryStringParameters?.admin === "1";
-      if (adminList) requireAdmin(event);
+      if (adminList) await requireAdmin(event);
       const query = id
         ? `?select=*&id=eq.${encodeURIComponent(id)}${adminList ? "" : "&published=eq.true"}&limit=1`
         : (adminList
@@ -74,7 +74,7 @@ exports.handler = async (event) => {
       return json(200, { ok: true, data: Array.isArray(rows) ? rows : [] }, event);
     }
 
-    const session = requireAdmin(event);
+    const session = await requireAdmin(event);
     requireSameOrigin(event);
     requireCsrf(event, session);
 
