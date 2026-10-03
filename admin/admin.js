@@ -9,17 +9,30 @@ async function api(path,options={}){
   const headers={"Accept":"application/json"};
   if(options.body)headers["Content-Type"]="application/json";
   if(options.csrf)headers["X-CSRF-Token"]=csrfToken;
-  const response=await fetch(path,{...options,headers,credentials:"include"});
-  let data=null;try{data=await response.json()}catch(_){}
-  if(response.status===401){showLogin();throw new Error("Authentication required.")}
-  if(response.status===429){
-    const error=new Error(data&&data.error?data.error:"Too many requests. Please retry later.");
-    error.status=429;
-    error.retryAfter=Number(response.headers.get("retry-after")||data?.retryAfter||0);
+  const controller=new AbortController();
+  const timeoutId=setTimeout(()=>controller.abort(),15000);
+  try{
+    const response=await fetch(path,{...options,headers,credentials:"include",signal:controller.signal});
+    let data=null;try{data=await response.json()}catch(_){}
+    if(response.status===401){showLogin();throw new Error("Authentication required.")}
+    if(response.status===429){
+      const error=new Error(data&&data.error?data.error:"Too many requests. Please retry later.");
+      error.status=429;
+      error.retryAfter=Number(response.headers.get("retry-after")||data?.retryAfter||0);
+      throw error;
+    }
+    if(!response.ok)throw new Error(data&&data.error?data.error:"Request failed ("+response.status+")");
+    return data;
+  }catch(error){
+    if(error?.name==="AbortError"){
+      const timeoutError=new Error("Request timed out. Check that the Docker app and MySQL database are running.");
+      timeoutError.status=408;
+      throw timeoutError;
+    }
     throw error;
+  }finally{
+    clearTimeout(timeoutId);
   }
-  if(!response.ok)throw new Error(data&&data.error?data.error:"Request failed ("+response.status+")");
-  return data;
 }
 function showLogin(){$("appView").hidden=true;$("loginView").hidden=false;csrfToken=""}
 function showApp(user){

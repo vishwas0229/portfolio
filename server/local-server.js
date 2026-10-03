@@ -144,6 +144,13 @@ const server = http.createServer(async (req, res) => {
     await handleStatic(req, res, url);
   } catch (error) {
     const statusCode = error?.statusCode || 500;
+    console.error("[local-server] request failed", {
+      method: req.method,
+      path: req.url,
+      statusCode,
+      code: error?.code,
+      message: error?.message
+    });
     if (!res.headersSent) {
       res.writeHead(statusCode, { "content-type": "application/json; charset=utf-8" });
     }
