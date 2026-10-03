@@ -183,10 +183,11 @@ docker compose down -v
 
 Use `docker compose down -v` only when you intentionally want to delete the local MySQL volume and start with a fresh database.
 
-For an existing MySQL volume created before admin session versioning, run the migration once:
+For an existing MySQL volume created before admin/contact schema changes, run the applicable migration once. The contact cleanup migration removes legacy email-notification columns:
 
 ```bash
 docker compose exec -T db mysql -uportfolio -pportfolio_dev portfolio < docs/mysql-migrate.sql
+docker compose exec -T db mysql -uportfolio -pportfolio_dev portfolio < docs/mysql-contact-migrate.sql
 ```
 
 ### Configuration
