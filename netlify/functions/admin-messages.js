@@ -43,7 +43,7 @@ exports.handler = async (event) => {
         return json(422, { ok: false, error: "status must be new, read, or archived." }, event);
       }
 
-      const now = new Date().toISOString();
+      const now = new Date().toISOString().slice(0, 19).replace("T", " ");
       const changed = await update("contact_messages", `?id=eq.${encodeURIComponent(id)}&select=*`, {
         status: status.value,
         read_at: status.value === "new" ? null : now,
