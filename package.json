@@ -7,7 +7,7 @@
   },
   "dependencies": {
     "nodemailer": "10.0.13",
-    "pg": "8.23.1"
+    "mysql2": "3.24.4"
   },
   "scripts": {
     "test": "node --test tests/*.test.js",
