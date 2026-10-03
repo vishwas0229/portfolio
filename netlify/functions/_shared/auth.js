@@ -1,5 +1,6 @@
 const crypto = require("node:crypto");
 const { getClientIp } = require("./rate-limit");
+const { config } = require("./config");
 
 const SESSION_COOKIE = "portfolio_admin_session";
 const CSRF_COOKIE = "portfolio_admin_csrf";
@@ -75,7 +76,6 @@ function buildSession(email) {
       sub: email,
       role: "admin",
       csrf,
-      ip: getClientIp({ headers: {} }),
       iat: Math.floor(Date.now() / 1000),
       exp: Math.floor(Date.now() / 1000) + SESSION_TTL_SECONDS
     },
@@ -114,7 +114,7 @@ function requireAdmin(event) {
 
 function requireSameOrigin(event) {
   const origin = event?.headers?.origin || event?.headers?.Origin;
-  if (origin && origin !== "https://portfolio.postlyfi.in") {
+  if (origin && origin !== config.corsOrigin) {
     const error = new Error("Forbidden");
     error.statusCode = 403;
     throw error;
