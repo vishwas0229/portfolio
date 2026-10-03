@@ -115,20 +115,21 @@ The portfolio now includes a serverless Node.js backend on Netlify Functions.
 - `/api/admin/*` — authenticated admin operations for messages, projects, certificates and analytics
 
 ### Data & security
-Supabase/PostgreSQL is used for persistent data. The service-role key, SMTP credentials, admin password hash and session secret are server-side environment variables only.
+
+MySQL is used for persistent backend data. The database connection is server-side only.
 
 Admin sessions use signed HttpOnly cookies plus a CSRF token. Public write endpoints use input validation, honeypot support and rate limiting.
 
 Database setup files:
-- `docs/supabase.sql`
-- `docs/supabase-seed.sql`
+- `docs/mysql.sql`
+- `docs/mysql-seed.sql`
 
 Admin console: `/admin/`
 
 
 ## 🐳 Docker — Local Full Stack
 
-The repository is Docker-first for local development. It runs the static portfolio, Node API runtime, and PostgreSQL database together.
+The repository is Docker-first for local development. It runs the static portfolio, Node API runtime, and MySQL together.
 
 ### Start
 
@@ -147,11 +148,11 @@ http://localhost:8888/api/health
 The Docker stack uses:
 
 - Node.js 20 application container
-- PostgreSQL 16 container
-- Persistent `postgres_data` Docker volume
-- Automatic database schema + seed initialization on first database creation
-- Native PostgreSQL access through `pg`
-- The same Netlify Function modules used by the production backend
+- MySQL 8.4.11 container
+- Persistent `mysql_data` Docker volume
+- Automatic MySQL schema + seed initialization on first database creation
+- Native MySQL access through `mysql2`
+- The same backend function modules used by the production runtime
 
 The local admin login defaults to:
 
@@ -169,32 +170,23 @@ docker compose up -d --build
 docker compose ps
 docker compose logs -f app
 docker compose logs -f db
+docker compose exec db mysql -uportfolio -pportfolio_dev portfolio
 docker compose down
 docker compose down -v
 ```
 
-Use `docker compose down -v` only when you intentionally want to delete the local PostgreSQL volume and start with an empty database.
+Use `docker compose down -v` only when you intentionally want to delete the local MySQL volume and start with a fresh database.
 
 ### Configuration
 
-You can override Compose defaults from your shell or a local `.env` file. Examples:
+For Docker, the application uses:
 
 ```env
-ADMIN_EMAIL=admin@localhost
-ADMIN_PASSWORD_HASH=<generated-with-scripts/generate-password-hash.mjs>
-ADMIN_SESSION_SECRET=<long-random-secret>
-
-SMTP_HOST=
-SMTP_PORT=587
-SMTP_USERNAME=
-SMTP_PASSWORD=
-SMTP_SECURE=false
-SMTP_REQUIRE_TLS=true
-SMTP_FROM=
-CONTACT_NOTIFICATION_EMAIL=
+DATABASE_URL=mysql://portfolio:portfolio_dev@db:3306/portfolio
+DB_POOL_MAX=10
 ```
 
-For local Docker, `DATABASE_URL`, `PORT`, and the internal PostgreSQL credentials are already wired by `docker-compose.yml`.
+Admin and optional SMTP settings can be overridden from a local `.env` file.
 
 ### Architecture
 
@@ -205,10 +197,10 @@ Browser
 Node local runtime :8888
    ├── /               → static portfolio
    ├── /admin/         → admin console
-   └── /api/*          → existing Netlify Function handlers
+   └── /api/*          → backend handlers
                       │
                       ▼
-                 PostgreSQL :5432
+                  MySQL :3306
 ```
 
-The production deployment can continue using Netlify Functions + Supabase REST; Docker uses the same function modules with the local PostgreSQL adapter.
+The same application backend can point to any reachable MySQL 8.x server by changing `DATABASE_URL`.
