@@ -117,6 +117,7 @@ function getSession(event) {
 async function requireAdmin(event) {
   const session = getSession(event);
   if (!session || session.role !== "admin" || !session.sub) {
+    console.warn("[auth] admin session rejected: no valid session cookie");
     const error = new Error("Unauthorized");
     error.statusCode = 401;
     throw error;
@@ -127,10 +128,20 @@ async function requireAdmin(event) {
     `?select=email,role,active,session_version&email=eq.${encodeURIComponent(session.sub)}&limit=1`
   );
   const admin = Array.isArray(rows) ? rows[0] : null;
-  if (!admin ||
-      !Boolean(admin.active) ||
-      admin.role !== "admin" ||
-      Number(admin.session_version || 1) !== Number(session.sessionVersion || 0)) {
+  if (!admin) {
+    console.warn("[auth] admin session rejected: account not found");
+    const error = new Error("Unauthorized");
+    error.statusCode = 401;
+    throw error;
+  }
+  if (!Boolean(admin.active) || admin.role !== "admin") {
+    console.warn("[auth] admin session rejected: account inactive or role invalid");
+    const error = new Error("Unauthorized");
+    error.statusCode = 401;
+    throw error;
+  }
+  if (Number(admin.session_version || 1) !== Number(session.sessionVersion || 0)) {
+    console.warn("[auth] admin session rejected: session version mismatch");
     const error = new Error("Unauthorized");
     error.statusCode = 401;
     throw error;
@@ -141,7 +152,15 @@ async function requireAdmin(event) {
 
 function requireSameOrigin(event) {
   const origin = event?.headers?.origin || event?.headers?.Origin;
-  if (origin && origin !== config.corsOrigin) {
+  if (!origin) return;
+
+  const allowed = new Set([config.corsOrigin]);
+  if (String(process.env.NODE_ENV || "").toLowerCase() === "development") {
+    allowed.add("http://localhost:8888");
+    allowed.add("http://127.0.0.1:8888");
+  }
+
+  if (!allowed.has(origin)) {
     const error = new Error("Forbidden");
     error.statusCode = 403;
     throw error;

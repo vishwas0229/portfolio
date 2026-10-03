@@ -72,9 +72,13 @@ async function readBody(req) {
 
 function setResponse(res, result) {
   const headers = { ...(result.headers || {}) };
-  if (result.multiValueHeaders && result.multiValueHeaders["set-cookie"]) {
-    headers["set-cookie"] = result.multiValueHeaders["set-cookie"];
+  const cookies = result.multiValueHeaders?.["set-cookie"] || headers["set-cookie"];
+  delete headers["set-cookie"];
+
+  if (Array.isArray(cookies) && cookies.length) {
+    res.setHeader("Set-Cookie", cookies);
   }
+
   res.writeHead(result.statusCode || 200, headers);
   res.end(result.body || "");
 }

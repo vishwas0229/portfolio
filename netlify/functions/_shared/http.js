@@ -13,7 +13,9 @@ function getOrigin(event) {
 
 function corsHeaders(event) {
   const requestOrigin = getOrigin(event);
-  const allowed = requestOrigin && requestOrigin === config.corsOrigin ? requestOrigin : config.corsOrigin;
+  const developmentOrigins = new Set(["http://localhost:8888", "http://127.0.0.1:8888"]);
+  const localDev = String(process.env.NODE_ENV || "").toLowerCase() === "development" && developmentOrigins.has(requestOrigin);
+  const allowed = localDev || requestOrigin === config.corsOrigin ? requestOrigin : config.corsOrigin;
   return {
     ...baseHeaders,
     "access-control-allow-origin": allowed,
