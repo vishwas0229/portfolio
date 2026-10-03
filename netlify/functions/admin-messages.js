@@ -13,7 +13,7 @@ exports.handler = async (event) => {
   if (event.httpMethod === "OPTIONS") return options(event);
 
   try {
-    const session = requireAdmin(event);
+    const session = await requireAdmin(event);
     const id = messageId(event);
 
     if (event.httpMethod === "GET") {
