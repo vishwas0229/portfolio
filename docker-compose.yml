@@ -1,21 +1,24 @@
 services:
   db:
-    image: postgres:16-alpine
+    image: mysql:8.4.11
     container_name: rahul-portfolio-db
     restart: unless-stopped
     environment:
-      POSTGRES_DB: portfolio
-      POSTGRES_USER: portfolio
-      POSTGRES_PASSWORD: portfolio_dev
+      MYSQL_DATABASE: portfolio
+      MYSQL_USER: portfolio
+      MYSQL_PASSWORD: portfolio_dev
+      MYSQL_ROOT_PASSWORD: root_dev_change_me
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./docs/supabase.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
-      - ./docs/supabase-seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
+      - mysql_data:/var/lib/mysql
+      - ./docs/mysql.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./docs/mysql-seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U portfolio -d portfolio"]
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uportfolio -pportfolio_dev --silent"]
       interval: 5s
       timeout: 5s
-      retries: 12
+      retries: 20
+      start_period: 15s
 
   app:
     build:
@@ -38,8 +41,7 @@ services:
       GITHUB_USERNAME: vishwas0229
       LEETCODE_USERNAME: vishwas0229
 
-      DATABASE_URL: postgresql://portfolio:portfolio_dev@db:5432/portfolio
-      DATABASE_SSL: "false"
+      DATABASE_URL: mysql://portfolio:portfolio_dev@db:3306/portfolio
       DB_POOL_MAX: "10"
 
       GITHUB_CACHE_TTL_SECONDS: "300"
@@ -50,7 +52,7 @@ services:
 
       ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@localhost}
       # Local-only default password: Admin@12345678
-      ADMIN_PASSWORD_HASH: ${ADMIN_PASSWORD_HASH:-pbkdf2$sha256$210000$R6ZX5t5mJZPuovaCNoLx_A$9yfNalu_0ZGP8WkEDWKSxfizBinvZVdPNqkHqUV48M0}
+      ADMIN_PASSWORD_HASH: ${ADMIN_PASSWORD_HASH:-pbkdf2$$sha256$$210000$$R6ZX5t5mJZPuovaCNoLx_A$$9yfNalu_0ZGP8WkEDWKSxfizBinvZVdPNqkHqUV48M0}
       ADMIN_SESSION_SECRET: ${ADMIN_SESSION_SECRET:-docker-local-admin-session-secret-change-me-please-32chars}
 
       SMTP_HOST: ${SMTP_HOST:-}
@@ -72,4 +74,4 @@ services:
       start_period: 10s
 
 volumes:
-  postgres_data:
+  mysql_data:
