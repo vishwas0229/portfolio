@@ -3169,6 +3169,18 @@ window.addEventListener("error", function (event) {
       }
 
 
+      document.addEventListener("click", (event) => {
+        const link = event.target.closest && event.target.closest("a");
+        if (!link) return;
+        const card = link.closest(".project-card, .showcase-project-card");
+        if (!card) return;
+        const text = String(link.textContent || "").toLowerCase();
+        const slug = card.dataset.projectSlug || "";
+        if (text.includes("demo")) trackEvent("demo_click", { section: "projects", projectSlug: slug });
+        else if (text.includes("github") || text.includes("repository")) trackEvent("repo_click", { section: "projects", projectSlug: slug });
+        else trackEvent("project_click", { section: "projects", projectSlug: slug });
+      });
+
       function createSafeLink(label, url) {
         if (!url) return null;
         try {
