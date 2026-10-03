@@ -1,5 +1,5 @@
 const { json, options } = require("./_shared/http");
-const { readJsonBody, validateEmail } = require("./_shared/validation");
+const { readJsonBody, validateAdminEmail } = require("./_shared/validation");
 const { checkRateLimit, getClientIp, rateLimitHeaders, resetRateLimit } = require("./_shared/rate-limit");
 const { verifyPassword, createLoginCookies, requireSameOrigin, SESSION_TTL_SECONDS } = require("./_shared/auth");
 const { list } = require("./_shared/db");
@@ -21,7 +21,7 @@ exports.handler = async (event) => {
   try {
     requireSameOrigin(event);
     const payload = readJsonBody(event, 4096);
-    const email = validateEmail(payload.email, 160);
+    const email = validateAdminEmail(payload.email, 160);
     const password = typeof payload.password === "string" ? payload.password : "";
 
     if (!email.ok || password.length < 1) {
