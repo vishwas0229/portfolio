@@ -1,3 +1,4 @@
+const crypto = require("node:crypto");
 const mysql = require("mysql2/promise");
 const { config } = require("./config");
 
@@ -138,6 +139,9 @@ function prepareRecord(table, row) {
   assertTable(table);
   const allowed = new Set(TABLE_COLUMNS[table]);
   const out = {};
+  if (["projects","certificates","contact_messages"].includes(table) && !row.id) {
+    out.id = crypto.randomUUID();
+  }
   for (const [key, value] of Object.entries(row || {})) {
     if (!allowed.has(key)) continue;
     out[key] = JSON_COLUMNS.has(key)
@@ -169,8 +173,8 @@ async function insert(table, records) {
   const [result] = await getPool().query(sql, values);
 
   if (!result.affectedRows) return [];
-  if (rows.length === 1 && result.insertId !== undefined) {
-    return list(table, "?select=*&limit=1&order=created_at.desc");
+  if (rows.length === 1 && rows[0].id) {
+    return list(table, "?select=*&id=eq." + encodeURIComponent(rows[0].id) + "&limit=1");
   }
   return list(table, "?select=*&limit=" + Math.min(rows.length, 1000) + "&order=created_at.desc");
 }
