@@ -197,10 +197,10 @@ Get best experience on desktop.</span>
     <button class="goodday-trigger" id="goodDayArrow" type="button" aria-label="Open have a good day card">&#8595;</button>
 
     <section class="modal" id="goodDayModal" aria-hidden="true">
-      <div class="goodday-panel">
+      <div class="goodday-panel" role="dialog" aria-modal="true" aria-labelledby="goodDayModalTitle">
         <div class="modal-top">
           <div class="modal-title">
-            <strong>Final Note</strong>
+            <strong id="goodDayModalTitle">Final Note</strong>
             <span>A warm closing message from this portfolio experience.</span>
           </div>
           <button class="close-btn-main" id="closeGoodDayBtn" type="button" aria-label="Close have a good day card">&times;</button>
@@ -261,10 +261,10 @@ Get best experience on desktop.</span>
     </section>
 
     <section class="modal" id="portfolioModal" aria-hidden="true">
-      <div class="portfolio-panel">
+      <div class="portfolio-panel" role="dialog" aria-modal="true" aria-labelledby="portfolioModalTitle">
         <div class="modal-top">
           <div class="modal-title">
-            <strong>Portfolio File</strong>
+            <strong id="portfolioModalTitle">Portfolio File</strong>
 
           </div>
           <button class="close-btn-main" id="closePortfolioBtn" type="button" aria-label="Close portfolio">&times;</button>
@@ -470,10 +470,10 @@ Get best experience on desktop.</span>
     </section>
 
     <section class="modal" id="simpleViewModal" aria-hidden="true">
-      <div class="simple-panel">
+      <div class="simple-panel" role="dialog" aria-modal="true" aria-labelledby="simpleViewModalTitle">
         <div class="modal-top">
           <div class="modal-title">
-            <strong>Simple View</strong>
+            <strong id="simpleViewModalTitle">Simple View</strong>
           </div>
           <button class="close-btn-main" id="closeSimpleViewBtn" type="button" aria-label="Close simple view">&times;</button>
         </div>
@@ -482,9 +482,9 @@ Get best experience on desktop.</span>
     </section>
 
     <section class="modal" id="snakeModal" aria-hidden="true">
-      <div class="simple-panel project-showcase-panel">
+      <div class="simple-panel project-showcase-panel" role="dialog" aria-modal="true" aria-labelledby="githubModalTitle">
         <div class="modal-top dashboard-modal-top">
-          <div class="modal-title"><strong>GitHub</strong><span>Live GitHub progress, contributions, and projects</span></div>
+          <div class="modal-title"><strong id="githubModalTitle">GitHub</strong><span>Live GitHub progress, contributions, and projects</span></div>
           <div class="dashboard-header-actions">
             <button class="mini-action" id="githubRefreshBtn" type="button">Refresh</button>
             <a class="mini-action" href="https://portfolio.postlyfi.in" target="_blank" rel="noopener">Open GitHub</a>
