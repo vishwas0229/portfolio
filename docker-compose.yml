@@ -4,17 +4,17 @@ services:
     container_name: rahul-portfolio-db
     restart: unless-stopped
     environment:
-      MYSQL_DATABASE: portfolio
-      MYSQL_USER: portfolio
-      MYSQL_PASSWORD: portfolio_dev
-      MYSQL_ROOT_PASSWORD: root_dev_change_me
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-portfolio}
+      MYSQL_USER: ${MYSQL_USER:-portfolio}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-portfolio_dev}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_dev_change_me}
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     volumes:
       - mysql_data:/var/lib/mysql
       - ./docs/mysql.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
       - ./docs/mysql-seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uportfolio -pportfolio_dev --silent"]
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u${MYSQL_USER:-portfolio} -p${MYSQL_PASSWORD:-portfolio_dev} --silent"]
       interval: 5s
       timeout: 5s
       retries: 20
@@ -41,7 +41,7 @@ services:
       GITHUB_USERNAME: vishwas0229
       LEETCODE_USERNAME: vishwas0229
 
-      DATABASE_URL: mysql://portfolio:portfolio_dev@db:3306/portfolio
+      DATABASE_URL: mysql://${MYSQL_USER:-portfolio}:${MYSQL_PASSWORD:-portfolio_dev}@db:3306/${MYSQL_DATABASE:-portfolio}
       DB_POOL_MAX: "10"
 
       GITHUB_CACHE_TTL_SECONDS: "300"
