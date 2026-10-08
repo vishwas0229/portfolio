@@ -42,8 +42,8 @@ exports.handler = async (event) => {
 
       const firebaseEmail = typeof decoded?.email === "string" ? decoded.email.trim().toLowerCase() : "";
       const emailCheck = validateAdminEmail(firebaseEmail, 160);
-      if (!emailCheck.ok || decoded?.email_verified !== true) {
-        return json(401, { ok: false, error: "Verified admin email is required." }, event, rateLimitHeaders(limited, 5));
+      if (!emailCheck.ok) {
+        return json(401, { ok: false, error: "A valid Firebase admin email is required." }, event, rateLimitHeaders(limited, 5));
       }
 
       email = emailCheck;
