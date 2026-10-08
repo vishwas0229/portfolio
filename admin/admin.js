@@ -1,5 +1,5 @@
 const $=id=>document.getElementById(id);
-const API_BASE_URL=String(window.ADMIN_API_BASE_URL||"").replace(/\/$/,"");
+const API_BASE_URL=String(window.ADMIN_API_BASE_URL||"https://api.postlyfi.in").replace(/\/$/,"");
 let csrfToken="";
 let firebaseAuth=null;
 let firebaseInitPromise=null;
@@ -93,7 +93,7 @@ function clearSessionTimer(){
 
 async function expireSession(){
   clearSessionTimer();
-  try{await fetch("/api/admin/logout",{method:"POST",credentials:"include"});}catch(_){}
+  try{await fetch(API_BASE_URL+"/api/admin/logout",{method:"POST",credentials:"include"});}catch(_){}
   showLogin("Your admin session has expired. Please sign in again.");
 }
 
@@ -178,6 +178,7 @@ $("loginForm").addEventListener("submit",async e=>{
       });
     }
 
+    if(!d || !d.authenticated || !d.csrfToken) throw new Error("Admin authentication failed. Please try again.");
     csrfToken=d.csrfToken||"";
     showApp(d.user);
     startSessionTimer(Date.now()+Number(d.expiresIn||0)*1000);
