@@ -93,14 +93,31 @@ exports.handler = async (event) => {
       "cache-control": "no-store"
     });
   } catch (error) {
-    const status = error?.statusCode || (error?.code === "DB_NOT_CONFIGURED" ? 503 : 500);
-    return json(status, {
-      ok: false,
-      error: status === 403
+    console.error("[admin-login] request failed", {
+      code: error?.code || null,
+      message: error?.message || String(error),
+      statusCode: error?.statusCode || null
+    });
+
+    const dbErrorCodes = new Set([
+      "DB_NOT_CONFIGURED",
+      "DB_CONFIG_INVALID",
+      "ECONNREFUSED",
+      "ETIMEDOUT",
+      "ENOTFOUND",
+      "ER_ACCESS_DENIED_ERROR",
+      "PROTOCOL_CONNECTION_LOST",
+      "ECONNRESET"
+    ]);
+    const status = error?.statusCode || (dbErrorCodes.has(error?.code) ? 503 : 500);
+    const errorMessage = dbErrorCodes.has(error?.code)
+      ? "Admin database connection failed. Please check the DATABASE_URL and MySQL server."
+      : status === 403
         ? "Request is not authorized."
         : status === 503
-          ? "Database is not configured."
-          : "Login request could not be processed."
-    }, event);
+          ? "Admin authentication service is not configured."
+          : "Login request could not be processed.";
+
+    return json(status, { ok: false, error: errorMessage }, event);
   }
 };
