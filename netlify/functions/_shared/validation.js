@@ -73,12 +73,22 @@ function readJsonBody(event, maxBytes = 16384) {
     throw error;
   }
   if (!raw) return {};
+
+  const headers = event?.headers || {};
+  const contentType = String(headers["content-type"] || headers["Content-Type"] || "").toLowerCase().split(";")[0].trim();
+
   try {
+    if (contentType === "application/x-www-form-urlencoded") {
+      const parsed = Object.fromEntries(new URLSearchParams(raw).entries());
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error();
+      return parsed;
+    }
+
     const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error();
     return parsed;
   } catch (_) {
-    const error = new Error("Invalid JSON payload");
+    const error = new Error("Invalid request payload");
     error.statusCode = 400;
     throw error;
   }
