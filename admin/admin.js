@@ -35,7 +35,7 @@ function esc(value){return String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;"
 function fmtDate(value){try{return new Date(value).toLocaleString()}catch(_){return String(value||"")}}
 async function api(path,options={}){
   const headers={"Accept":"application/json"};
-  if(options.body)headers["Content-Type"]="application/json";
+  if(options.body)headers["Content-Type"]=options.contentType||"application/json";
   if(options.csrf)headers["X-CSRF-Token"]=csrfToken;
   const controller=new AbortController();
   const timeoutId=setTimeout(()=>controller.abort(),15000);
@@ -160,7 +160,8 @@ $("loginForm").addEventListener("submit",async e=>{
         const firebaseIdToken=await credential.user.getIdToken(true);
         d=await api("/api/admin/login",{
           method:"POST",
-          body:JSON.stringify({firebaseIdToken})
+          body:JSON.stringify({firebaseIdToken}),
+          contentType:"text/plain;charset=UTF-8"
         });
         await auth.signOut();
       }catch(firebaseError){
