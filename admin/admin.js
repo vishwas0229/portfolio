@@ -160,8 +160,8 @@ $("loginForm").addEventListener("submit",async e=>{
         const firebaseIdToken=await credential.user.getIdToken(true);
         d=await api("/api/admin/login",{
           method:"POST",
-          body:JSON.stringify({firebaseIdToken}),
-          contentType:"text/plain;charset=UTF-8"
+          body:new URLSearchParams({firebaseIdToken}).toString(),
+          contentType:"application/x-www-form-urlencoded;charset=UTF-8"
         });
         await auth.signOut();
       }catch(firebaseError){
