@@ -3543,6 +3543,58 @@ window.addEventListener("error", function (event) {
       }
 
 
+      async function fetchJsonSafely(url, options = {}) {
+        const response = await fetch(url, options);
+        const contentType = response.headers.get("content-type") || "";
+        if (!response.ok) throw new Error(`Server ${response.status}`);
+        if (!contentType.toLowerCase().includes("application/json")) {
+          throw new Error("Expected JSON response");
+        }
+        return response.json();
+      }
+
+      async function loadGitHubDirect(username) {
+        const base = "https://api.github.com";
+        const [profile, repos, contributions] = await Promise.all([
+          fetchJsonSafely(`${base}/users/${encodeURIComponent(username)}`, { cache: "no-store" }),
+          fetchJsonSafely(`${base}/users/${encodeURIComponent(username)}/repos?per_page=100&sort=updated`, { cache: "no-store" }),
+          fetchJsonSafely(`https://github-contributions-api.jogruber.de/v4/${encodeURIComponent(username)}?y=last`, { cache: "no-store" }).catch(() => ({ contributions: [] }))
+        ]);
+        const publicRepos = Array.isArray(repos) ? repos.filter(r => !r.fork) : [];
+        const languageTotals = {};
+        let totalStars = 0, totalForks = 0;
+        publicRepos.forEach(repo => {
+          totalStars += Number(repo.stargazers_count || 0);
+          totalForks += Number(repo.forks_count || 0);
+          if (repo.language) languageTotals[repo.language] = (languageTotals[repo.language] || 0) + Math.max(Number(repo.size || 1), 1);
+        });
+        const contributionDays = Array.isArray(contributions?.contributions) ? contributions.contributions : [];
+        const contributionTotal = contributionDays.reduce((sum, d) => sum + Number(d.count || 0), 0);
+        let currentStreak = 0;
+        for (let i = contributionDays.length - 1; i >= 0; i--) {
+          if (Number(contributionDays[i].count || 0) > 0) currentStreak++;
+          else break;
+        }
+        const monthly = Array.from({ length: 12 }, () => 0);
+        const year = new Date().getUTCFullYear();
+        contributionDays.forEach(d => {
+          const date = new Date(`${d.date}T00:00:00Z`);
+          if (date.getUTCFullYear() === year) monthly[date.getUTCMonth()] += Number(d.count || 0);
+        });
+        return {
+          ...profile,
+          publicRepos: Number(profile.public_repos || publicRepos.length),
+          totalStars,
+          totalForks,
+          contributionTotal,
+          currentStreak,
+          contributions: contributionDays,
+          languages: Object.entries(languageTotals).sort((a,b) => b[1] - a[1]).map(([name,size]) => ({name,size})),
+          monthly,
+          year
+        };
+      }
+
       async function loadGitHubData() {
         if (githubLoading) return;
         githubLoading = true;
@@ -3551,10 +3603,14 @@ window.addEventListener("error", function (event) {
         if (status) status.textContent = "Fetching live GitHub data…";
         if (refresh) refresh.disabled = true;
         try {
-          const response = await fetch(`/.netlify/functions/github?t=${Date.now()}`, { cache: "no-store" });
-          if (!response.ok) throw new Error(`Server ${response.status}`);
-          const payload = await response.json();
-          if (!payload.ok || !payload.data) throw new Error(payload.error || "No live data");
+          let payload;
+          try {
+            payload = await fetchJsonSafely(`/.netlify/functions/github?t=${Date.now()}`, { cache: "no-store" });
+            if (!payload.ok || !payload.data) throw new Error(payload.error || "No live data");
+          } catch (_) {
+            const direct = await loadGitHubDirect("vishwas0229");
+            payload = { ok: true, source: "GitHub API", data: direct };
+          }
           const d = payload.data;
           setGitHubText("ghRepos", d.publicRepos);
           setGitHubText("ghFollowers", d.followers);
@@ -3566,8 +3622,7 @@ window.addEventListener("error", function (event) {
           renderGitHubLanguages(d.languages);
           renderGitHubMonthly(d.monthly, d.year);
           if (status) status.textContent = `Live data loaded • ${payload.source}`;
-        } catch (error) {
-          console.error("GitHub live data error:", error);
+        } catch (_) {
           if (status) status.textContent = "Live GitHub data temporarily unavailable";
           const heat = document.getElementById("githubHeatmap");
           if (heat) heat.innerHTML = '<div class="gh-empty">Could not load live GitHub data. Tap Refresh to retry.</div>';
@@ -3708,10 +3763,47 @@ window.addEventListener("error", function (event) {
         if (status) status.textContent = "Fetching live data…";
         if (refresh) refresh.disabled = true;
         try {
-          const response = await fetch(`/.netlify/functions/leetcode?t=${Date.now()}`, { cache: "no-store" });
-          if (!response.ok) throw new Error(`Server ${response.status}`);
-          const payload = await response.json();
-          if (!payload.ok || !payload.data) throw new Error(payload.error || "No live data");
+          let payload;
+          try {
+            payload = await fetchJsonSafely(`/.netlify/functions/leetcode?t=${Date.now()}`, { cache: "no-store" });
+            if (!payload.ok || !payload.data) throw new Error(payload.error || "No live data");
+          } catch (_) {
+            const username = "vishwas0229";
+            const base = "https://leetcode-api-pied.vercel.app";
+            const year = new Date().getUTCFullYear();
+            const [profile, solved, calendarCurrent, calendarPrevious] = await Promise.all([
+              fetchJsonSafely(`${base}/user/${encodeURIComponent(username)}`, { cache: "no-store" }),
+              fetchJsonSafely(`${base}/user/${encodeURIComponent(username)}/solved`, { cache: "no-store" }).catch(() => ({})),
+              fetchJsonSafely(`${base}/user/${encodeURIComponent(username)}/calendar?year=${year}`, { cache: "no-store" }).catch(() => ({})),
+              fetchJsonSafely(`${base}/user/${encodeURIComponent(username)}/calendar?year=${year - 1}`, { cache: "no-store" }).catch(() => ({}))
+            ]);
+            const pick = (obj, keys) => {
+              for (const key of keys) if (obj && obj[key] !== undefined && obj[key] !== null) return obj[key];
+              return null;
+            };
+            const data = {
+              ...profile,
+              ...solved,
+              username: pick(profile, ["username"]) || username,
+              totalSolved: pick(solved, ["totalSolved", "total_solved"]) ?? pick(profile, ["totalSolved", "total_solved"]) ?? 0,
+              easySolved: pick(solved, ["easySolved", "easy_solved"]) ?? pick(profile, ["easySolved", "easy_solved"]) ?? 0,
+              mediumSolved: pick(solved, ["mediumSolved", "medium_solved"]) ?? pick(profile, ["mediumSolved", "medium_solved"]) ?? 0,
+              hardSolved: pick(solved, ["hardSolved", "hard_solved"]) ?? pick(profile, ["hardSolved", "hard_solved"]) ?? 0,
+              ranking: pick(profile, ["ranking", "rank"]),
+              acceptance: pick(profile, ["acceptanceRate", "acceptance", "acceptance_rate"]),
+              submissionCalendar: JSON.stringify({
+                ...(calendarPrevious?.submissionCalendar || {}),
+                ...(calendarCurrent?.submissionCalendar || {})
+              }),
+              streak: pick(calendarCurrent, ["streak", "currentStreak"]) ?? 0,
+              totalActiveDays: pick(calendarCurrent, ["totalActiveDays", "total_active_days"]) ?? 0,
+              totalQuestions: pick(solved, ["totalQuestions", "total_questions"]),
+              totalEasy: pick(solved, ["totalEasy", "total_easy"]),
+              totalMedium: pick(solved, ["totalMedium", "total_medium"]),
+              totalHard: pick(solved, ["totalHard", "total_hard"])
+            };
+            payload = { ok: true, source: "LeetCode public API", data };
+          }
           const d = payload.data;
           setLeetCodeText("leetcodeUsername", d.username || "LeetCode");
           setLeetCodeText("lcTotal", d.totalSolved);
@@ -3722,14 +3814,13 @@ window.addEventListener("error", function (event) {
           setLeetCodeText("lcAcceptance", d.acceptance == null ? null : `${Number(d.acceptance).toFixed(1)}%`);
           renderLeetCodeHeatmap(d.submissionCalendar);
           renderLeetCodeCharts(d);
-          if (status) status.textContent = `Live data loaded • ${payload.source === "leetcode-graphql" ? "LeetCode" : "public API"}`;
+          if (status) status.textContent = `Live data loaded • ${payload.source === "leetcode-graphql" ? "LeetCode" : payload.source}`;
           const updated = document.getElementById("lcUpdated");
           if (updated) updated.textContent = `Updated ${new Date().toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"})} • streak ${d.streak || 0} days • ${d.totalActiveDays || 0} active days`;
-        } catch (error) {
-          console.error("LeetCode live data error:", error);
+        } catch (_) {
           if (status) status.textContent = "Live data temporarily unavailable";
           const heat = document.getElementById("leetcodeHeatmap");
-          if (heat) heat.innerHTML = '<div class="lc-error"><strong>Could not load live LeetCode data.</strong><span>Tap Refresh to retry. If you are testing with Live Server, deploy this site to Netlify so the serverless proxy can reach LeetCode without browser CORS restrictions.</span></div>';
+          if (heat) heat.innerHTML = '<div class="lc-error"><strong>Could not load live LeetCode data.</strong><span>Live API is temporarily unavailable. Tap Refresh to retry.</span></div>';
           const meta = document.getElementById("lcHeatmapMeta");
           if (meta) meta.textContent = "Retry available";
         } finally {
