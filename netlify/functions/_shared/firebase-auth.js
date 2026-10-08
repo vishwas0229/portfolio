@@ -1,10 +1,22 @@
-const { cert, getApps, initializeApp } = require("firebase-admin/app");
-const { getAuth } = require("firebase-admin/auth");
-
 let authInstance = null;
 
 function getFirebaseAuth() {
   if (authInstance) return authInstance;
+
+  let cert;
+  let getApps;
+  let initializeApp;
+  let getAuth;
+
+  try {
+    ({ cert, getApps, initializeApp } = require("firebase-admin/app"));
+    ({ getAuth } = require("firebase-admin/auth"));
+  } catch (error) {
+    const wrapped = new Error("Firebase Admin SDK could not be loaded");
+    wrapped.code = "FIREBASE_SDK_LOAD_FAILED";
+    wrapped.cause = error;
+    throw wrapped;
+  }
 
   const raw = String(process.env.FIREBASE_SERVICE_ACCOUNT_JSON || "").trim();
   if (!raw) {
