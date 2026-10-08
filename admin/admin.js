@@ -1,5 +1,31 @@
 const $=id=>document.getElementById(id);
+const API_BASE_URL=String(window.ADMIN_API_BASE_URL||"").replace(/\/$/,"");
 let csrfToken="";
+let firebaseAuth=null;
+let firebaseInitPromise=null;
+
+async function initFirebaseAuth(){
+  if(firebaseInitPromise)return firebaseInitPromise;
+  firebaseInitPromise=(async()=>{
+    if(!window.firebase?.auth)return null;
+    try{
+      const response=await fetch("/__/firebase/init.json",{cache:"no-store"});
+      if(!response.ok)throw new Error("Firebase configuration unavailable");
+      const config=await response.json();
+      if(!firebase.apps.length)firebase.initializeApp(config);
+      firebaseAuth=firebase.auth();
+      await firebaseAuth.setPersistence(firebase.auth.Auth.Persistence.NONE);
+      return firebaseAuth;
+    }catch(error){
+      console.warn("[admin] Firebase Authentication unavailable; legacy login remains available.",error);
+      firebaseAuth=null;
+      return null;
+    }
+  })();
+  return firebaseInitPromise;
+}
+
+void initFirebaseAuth();
 let projects=[];
 let certificates=[];
 let sessionTimerHandle=null;
@@ -14,7 +40,7 @@ async function api(path,options={}){
   const controller=new AbortController();
   const timeoutId=setTimeout(()=>controller.abort(),15000);
   try{
-    const response=await fetch(path,{...options,headers,credentials:"include",signal:controller.signal});
+    const response=await fetch(API_BASE_URL+path,{...options,headers,credentials:"include",signal:controller.signal});
     let data=null;try{data=await response.json()}catch(_){}
     if(response.status===401){showLogin();throw new Error("Authentication required.")}
     if(response.status===429){
@@ -122,7 +148,36 @@ $("loginForm").addEventListener("submit",async e=>{
   const button=document.querySelector('#loginForm button[type="submit"]');
   button.disabled=true;
   try{
-    const d=await api("/api/admin/login",{method:"POST",body:JSON.stringify({email:$("loginEmail").value,password:$("loginPassword").value})});
+    const email=$("loginEmail").value.trim();
+    const password=$("loginPassword").value;
+    let d;
+
+    const auth=await initFirebaseAuth();
+    if(auth){
+      $("loginStatus").textContent="Authenticating with Firebase…";
+      try{
+        const credential=await auth.signInWithEmailAndPassword(email,password);
+        const firebaseIdToken=await credential.user.getIdToken(true);
+        d=await api("/api/admin/login",{
+          method:"POST",
+          body:JSON.stringify({firebaseIdToken})
+        });
+        await auth.signOut();
+      }catch(firebaseError){
+        try{await auth.signOut()}catch(_){}
+        const code=firebaseError?.code||"";
+        if(code==="auth/invalid-credential"||code==="auth/wrong-password"||code==="auth/user-not-found"||code==="auth/invalid-email"){
+          throw new Error("Invalid email or password.");
+        }
+        throw firebaseError;
+      }
+    }else{
+      d=await api("/api/admin/login",{
+        method:"POST",
+        body:JSON.stringify({email,password})
+      });
+    }
+
     csrfToken=d.csrfToken||"";
     showApp(d.user);
     startSessionTimer(Date.now()+Number(d.expiresIn||0)*1000);
