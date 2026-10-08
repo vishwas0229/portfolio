@@ -3054,6 +3054,18 @@ window.addEventListener("error", function (event) {
         }
       }
 
+      function releaseModalFocus(modal, fallbackId) {
+        if (!modal) return;
+        const active = document.activeElement;
+        if (active && modal.contains(active)) {
+          active.blur();
+          const fallback = fallbackId ? document.getElementById(fallbackId) : null;
+          if (fallback && typeof fallback.focus === "function") {
+            try { fallback.focus({ preventScroll: true }); } catch (_) { fallback.focus(); }
+          }
+        }
+      }
+
       function openFeedbackModal(options = {}) {
         if (!feedbackModal || animationBusy || feedbackModal.classList.contains("active")) return;
         if (!options.skipDeskSync && !isMobileQuery.matches && state === "desk") syncCameraToDeskPose();
@@ -3084,6 +3096,7 @@ window.addEventListener("error", function (event) {
       function closeFeedbackModal() {
         if (!feedbackModal) return;
         if (!isMobileQuery.matches && state === "desk") syncCameraToDeskPose();
+        releaseModalFocus(feedbackModal, "penTarget");
         feedbackModal.classList.remove("active");
         feedbackModal.setAttribute("aria-hidden", "true");
         if (!portfolioModal.classList.contains("active") && !simpleViewModal.classList.contains("active") && !goodDayModal.classList.contains("active") && (!gameModal || gameModal.style.display !== "flex")) {
@@ -3129,6 +3142,7 @@ window.addEventListener("error", function (event) {
 
       function closePortfolio() {
         if (!isMobileQuery.matches && state === "desk") syncCameraToDeskPose();
+        releaseModalFocus(portfolioModal, "fileTarget");
         portfolioModal.classList.remove("active");
         portfolioModal.setAttribute("aria-hidden", "true");
         document.body.style.overflow = "";
@@ -3653,6 +3667,7 @@ window.addEventListener("error", function (event) {
       }
 
       function closeSnakeView() {
+        releaseModalFocus(snakeModal, "snakeViewBtn");
         snakeModal.classList.remove("active");
         snakeModal.setAttribute("aria-hidden", "true");
         clearInterval(githubRefreshTimer);
@@ -3843,6 +3858,7 @@ window.addEventListener("error", function (event) {
 
       function closeLeetCodeView() {
         if (!leetcodeModal) return;
+        releaseModalFocus(leetcodeModal, "leetcodeViewBtn");
         leetcodeModal.classList.remove("active");
         leetcodeModal.setAttribute("aria-hidden", "true");
         clearInterval(leetcodeRefreshTimer);
@@ -3852,6 +3868,7 @@ window.addEventListener("error", function (event) {
 
       function closeSimpleView() {
         if (!isMobileQuery.matches && state === "desk") syncCameraToDeskPose();
+        releaseModalFocus(simpleViewModal, "simpleViewBtn");
         simpleViewModal.classList.remove("active");
         simpleViewModal.setAttribute("aria-hidden", "true");
         if (!portfolioModal.classList.contains("active") && !goodDayModal.classList.contains("active") && (!feedbackModal || !feedbackModal.classList.contains("active"))) document.body.style.overflow = "";
@@ -3884,6 +3901,7 @@ window.addEventListener("error", function (event) {
       function closeGoodDayModal() {
         if (!goodDayModal || animationBusy) return;
         if (!isMobileQuery.matches && state === "desk") syncCameraToDeskPose();
+        releaseModalFocus(goodDayModal, "goodDayArrow");
         goodDayModal.classList.remove("active");
         goodDayModal.setAttribute("aria-hidden", "true");
         if (!portfolioModal.classList.contains("active") && !simpleViewModal.classList.contains("active") && (!feedbackModal || !feedbackModal.classList.contains("active")) && (!gameModal || gameModal.style.display !== "flex")) {
@@ -4454,6 +4472,7 @@ window.addEventListener("error", function (event) {
       window.closeGame = function closeGame() {
         if (!isMobileQuery.matches && state === "desk") syncCameraToDeskPose();
         const accessibleGameModal = document.getElementById("gameModal");
+        releaseModalFocus(accessibleGameModal, "controllerTarget");
         accessibleGameModal.style.display = "none";
         accessibleGameModal.setAttribute("aria-hidden", "true");
         refreshDeskUI();
