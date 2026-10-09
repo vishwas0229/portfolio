@@ -14,7 +14,7 @@ services:
       - ./docs/mysql.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
       - ./docs/mysql-seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u${MYSQL_USER:-portfolio} -p${MYSQL_PASSWORD:-portfolio_dev} --silent"]
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$${MYSQL_USER} -p$${MYSQL_PASSWORD} --silent"]
       interval: 5s
       timeout: 5s
       retries: 20
@@ -30,29 +30,23 @@ services:
       db:
         condition: service_healthy
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
       HOST: 0.0.0.0
       PORT: 8888
-
-      PORTFOLIO_SITE_URL: http://localhost:8888
-      CORS_ORIGIN: http://localhost:8888
-      COOKIE_SECURE: "false"
-
+      PORTFOLIO_SITE_URL: ${PORTFOLIO_SITE_URL:-http://localhost:8888}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:8888}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
       GITHUB_USERNAME: vishwas0229
       LEETCODE_USERNAME: vishwas0229
-
       DATABASE_URL: mysql://${MYSQL_USER:-portfolio}:${MYSQL_PASSWORD:-portfolio_dev}@db:3306/${MYSQL_DATABASE:-portfolio}
       DB_POOL_MAX: "10"
-
       GITHUB_CACHE_TTL_SECONDS: "300"
       LEETCODE_CACHE_TTL_SECONDS: "300"
       API_CACHE_STALE_SECONDS: "3600"
       API_RATE_LIMIT_WINDOW_SECONDS: "60"
       API_RATE_LIMIT_MAX: "60"
-
       ADMIN_SESSION_SECRET: ${ADMIN_SESSION_SECRET:-docker-local-admin-session-secret-change-me-please-32chars}
       ADMIN_SESSION_TTL_SECONDS: ${ADMIN_SESSION_TTL_SECONDS:-1800}
-
     ports:
       - "127.0.0.1:8888:8888"
     healthcheck:
