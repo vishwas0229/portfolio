@@ -8090,3 +8090,53 @@
     animation: none !important;
   }
 }
+
+
+/* Compact utility control and mobile spacing for the consolidated profile row. */
+.ui-visibility-toggle[aria-pressed="true"] .ui-toggle-track {
+  background: rgba(72, 214, 255, .48);
+}
+@media (max-width: 520px) {
+  .hud-top {
+    left: 10px;
+    right: 10px;
+    gap: 6px;
+  }
+  .hud-ui-controls { gap: 4px; }
+  .hud-social-links { gap: 3px; }
+  .hud-social-links .hud-social-icon {
+    width: 26px;
+    height: 26px;
+    flex-basis: 26px;
+    border-radius: var(--radius-round);
+    font-size: var(--type-xs);
+  }
+  .ui-visibility-toggle {
+    min-height: 30px;
+    padding: 5px 7px;
+    gap: 5px;
+  }
+}
+
+/* Five intentional control families: standard, primary, utility, toggle, and scene target. */
+.glass-btn, .mini-action, .nav-btn, .btn {
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  background: rgba(5, 14, 28, .72);
+}
+.glass-btn.primary, .primary-btn, .feedback-send {
+  border-color: rgba(72, 214, 255, .4);
+  color: var(--color-text-primary);
+  background: linear-gradient(135deg, rgba(18, 103, 150, .94), rgba(16, 70, 116, .94));
+}
+.close-btn-main, .close-btn, .feedback-close,
+.mobile-nav-arrow, .mobile-swipe-arrow {
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-round);
+  color: var(--color-text-secondary);
+  background: rgba(4, 13, 26, .58);
+}
+.glass-btn:hover, .mini-action:hover, .nav-btn:hover, .btn:hover {
+  border-color: rgba(72, 214, 255, .48);
+}
