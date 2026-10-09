@@ -10,10 +10,22 @@ exports.handler = async (event) => {
     session = await requireAdmin(event);
   } catch (error) {
     const status = error?.statusCode || (error?.code === "DB_NOT_CONFIGURED" ? 503 : 500);
+
+    // No session (or an expired/revoked session) is a normal anonymous state
+    // when the login screen first loads, not a failed API operation.
+    if (status === 401) {
+      return json(200, {
+        ok: true,
+        authenticated: false
+      }, event, { "cache-control": "no-store" });
+    }
+
     return json(status, {
       ok: false,
       authenticated: false,
-      error: status === 503 ? "Database is not configured." : "Authentication required."
+      error: status === 503
+        ? "Database is not configured."
+        : "Could not verify the admin session."
     }, event, { "cache-control": "no-store" });
   }
 
