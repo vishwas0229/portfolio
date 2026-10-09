@@ -1,6 +1,6 @@
 const $=id=>document.getElementById(id);
 const LOCAL_ADMIN_HOST = ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
-const NGROK_TUNNEL_HOST = /(^|\\.)ngrok-free\\.(dev|app)$/i.test(window.location.hostname);
+const NGROK_TUNNEL_HOST = /(^|\.)ngrok-free\.(dev|app)$/i.test(window.location.hostname);
 const USE_SAME_ORIGIN_API = LOCAL_ADMIN_HOST || NGROK_TUNNEL_HOST;
 const API_BASE_URL=String(window.ADMIN_API_BASE_URL||(USE_SAME_ORIGIN_API?window.location.origin:"https://api.postlyfi.in")).replace(/\/$/,"");
 let csrfToken="";
