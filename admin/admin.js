@@ -1,5 +1,6 @@
 const $=id=>document.getElementById(id);
-const API_BASE_URL=String(window.ADMIN_API_BASE_URL||"https://api.postlyfi.in").replace(/\/$/,"");
+const LOCAL_ADMIN_HOST = ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
+const API_BASE_URL=String(window.ADMIN_API_BASE_URL||(LOCAL_ADMIN_HOST?window.location.origin:"https://api.postlyfi.in")).replace(/\/$/,"");
 let csrfToken="";
 let firebaseAuth=null;
 let firebaseInitPromise=null;
@@ -25,7 +26,7 @@ async function initFirebaseAuth(){
   return firebaseInitPromise;
 }
 
-void initFirebaseAuth();
+if (!LOCAL_ADMIN_HOST) void initFirebaseAuth();
 let projects=[];
 let certificates=[];
 let sessionTimerHandle=null;
