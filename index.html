@@ -157,18 +157,22 @@ Get best experience on desktop.</span>
             <a class="hud-social-icon" href="https://linkedin.com/in/vishwas29/" target="_blank" rel="noopener" aria-label="LinkedIn" title="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
             <a class="hud-social-icon" href="https://x.com/vishwas_29" target="_blank" rel="noopener" aria-label="X" title="X"><i class="fa-brands fa-x-twitter"></i></a>
           </div>
-          <button class="ui-visibility-toggle" id="uiVisibilityToggle" type="button" aria-pressed="true" aria-label="Toggle interactive object labels">
-            <span class="ui-toggle-light" aria-hidden="true"></span>
+          <button class="ui-visibility-toggle" id="uiVisibilityToggle" type="button" aria-pressed="true" aria-label="Toggle interactive object labels" title="Interactive labels visible">
+            <span class="ui-toggle-track" aria-hidden="true"><span class="ui-toggle-thumb"></span></span>
             <span class="ui-toggle-label">UI Visibility</span>
-            <span class="ui-toggle-state">UI</span>
+            <span class="ui-toggle-state">On</span>
           </button>
         </div>
       </div>
       <div class="hud-actions">
-        <button class="glass-btn" id="simpleViewBtn" type="button">Simple View</button>
-        <button class="glass-btn github-btn" id="snakeViewBtn" type="button">GitHub</button>
-        <button class="glass-btn leetcode-btn" id="leetcodeViewBtn" type="button">LeetCode</button>
-        <button class="glass-btn" id="restartBtn" type="button">Restart</button>
+        <div class="hud-action-group" role="group" aria-label="Scene controls">
+          <button class="glass-btn" id="simpleViewBtn" type="button">Simple View</button>
+          <button class="glass-btn" id="restartBtn" type="button">Restart</button>
+        </div>
+        <div class="hud-action-group" role="group" aria-label="Developer profile panels">
+          <button class="glass-btn github-btn" id="snakeViewBtn" type="button">GitHub</button>
+          <button class="glass-btn leetcode-btn" id="leetcodeViewBtn" type="button">LeetCode</button>
+        </div>
       </div>
     </div>
 
