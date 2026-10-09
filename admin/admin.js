@@ -43,7 +43,7 @@ async function api(path,options={}){
   try{
     const response=await fetch(API_BASE_URL+path,{...options,headers,credentials:"include",signal:controller.signal});
     let data=null;try{data=await response.json()}catch(_){}
-    if(response.status===401){showLogin();throw new Error("Authentication required.")}
+    if(response.status===401 && path !== "/api/admin/login"){showLogin();throw new Error("Authentication required.")}
     if(response.status===429){
       const error=new Error(data&&data.error?data.error:"Too many requests. Please retry later.");
       error.status=429;
@@ -153,7 +153,7 @@ $("loginForm").addEventListener("submit",async e=>{
     const password=$("loginPassword").value;
     let d;
 
-    const auth=await initFirebaseAuth();
+    const auth=LOCAL_ADMIN_HOST ? null : await initFirebaseAuth();
     if(auth){
       $("loginStatus").textContent="Authenticating with Firebase…";
       try{
