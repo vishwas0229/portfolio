@@ -7963,8 +7963,62 @@
 .hud-actions { gap: 16px; }
 .hud-action-group { display: inline-flex; align-items: center; gap: 10px; }
 .hud-action-group + .hud-action-group { margin-left: 4px; padding-left: 18px; border-left: 1px solid rgba(148,163,184,.25); }
+.primary-btn { font-size: var(--type-base); border-radius: var(--radius-pill); }
+.glass-btn, .primary-btn { border-color: var(--control-border); }
+.target-label {
+  color: var(--color-text-primary);
+  border-color: rgba(72, 214, 255, 0.34);
+  background: rgba(5, 14, 28, 0.88);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+}
+.click-target:hover .target-label,
+.click-target:focus-visible .target-label {
+  transform: translateX(-50%) translateY(-2px);
+  border-color: var(--color-text-accent);
+  background: rgba(9, 28, 49, 0.96);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+.goodday-trigger .target-label {
+  top: auto;
+  bottom: calc(100% + 8px);
+  pointer-events: none;
+}
+#app.ui-labels-hidden .goodday-trigger .target-label,
+body.ui-labels-hidden .goodday-trigger .target-label {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  transform: translateX(-50%) translateY(8px) scale(0.96) !important;
+}
+.brand-chip::before { content: none; }
+.ui-visibility-toggle {
+  width: var(--control-height);
+  min-width: var(--control-height);
+  min-height: var(--control-height);
+  justify-content: center;
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  opacity: 0.68;
+}
+.ui-visibility-toggle:hover,
+.ui-visibility-toggle:focus-visible {
+  opacity: 1;
+  border-color: var(--control-border);
+  background: rgba(4, 13, 26, 0.62);
+  box-shadow: none;
+}
+.ui-toggle-label, .ui-toggle-state { display: none; }
+.ui-toggle-track { background: var(--color-text-muted); }
+.ui-visibility-toggle[aria-pressed="true"] .ui-toggle-track { background: var(--color-text-secondary); }
+.ui-visibility-toggle[aria-pressed="true"] .ui-toggle-thumb { transform: translateX(16px); }
+.hud-social-links { flex-wrap: wrap; }
 @media (max-width: 700px) {
-  .hud-top .hud-social-icon { width: 31px; height: 31px; flex-basis: 31px; }
+  .hud-top { gap: 6px; }
+  .brand-chip { padding-right: 10px; padding-left: 10px; }
+  .hud-top .hud-social-icon { width: 31px; height: 31px; flex: 0 0 31px; }
+  .ui-visibility-toggle { width: 44px; min-width: 44px; min-height: 44px; }
   .hud-actions { max-width: calc(100vw - 20px); flex-wrap: wrap; justify-content: center; gap: 8px; }
   .hud-action-group { gap: 6px; }
   .hud-action-group + .hud-action-group { margin-left: 0; padding-left: 0; border-left: 0; }
