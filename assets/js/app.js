@@ -2676,7 +2676,7 @@ window.addEventListener("error", function (event) {
           uiVisibilityToggle.setAttribute("aria-pressed", uiLabelsVisible ? "true" : "false");
           uiVisibilityToggle.setAttribute("title", uiLabelsVisible ? "Interactive labels visible" : "Interactive labels hidden");
           const stateLabel = uiVisibilityToggle.querySelector(".ui-toggle-state");
-          if (stateLabel) stateLabel.textContent = isMobileQuery.matches ? "UI" : (uiLabelsVisible ? "On" : "Off");
+          if (stateLabel) stateLabel.textContent = uiLabelsVisible ? "On" : "Off";
         }
       }
 
@@ -3893,6 +3893,7 @@ window.addEventListener("error", function (event) {
 
         goodDayModal.classList.add("active");
         goodDayModal.setAttribute("aria-hidden", "false");
+        if (goodDayArrow) goodDayArrow.setAttribute("aria-expanded", "true");
         document.body.style.overflow = "hidden";
         updateGoodDayArrow();
         refreshDeskUI();
@@ -3904,6 +3905,7 @@ window.addEventListener("error", function (event) {
         releaseModalFocus(goodDayModal, "goodDayArrow");
         goodDayModal.classList.remove("active");
         goodDayModal.setAttribute("aria-hidden", "true");
+        if (goodDayArrow) goodDayArrow.setAttribute("aria-expanded", "false");
         if (!portfolioModal.classList.contains("active") && !simpleViewModal.classList.contains("active") && (!feedbackModal || !feedbackModal.classList.contains("active")) && (!gameModal || gameModal.style.display !== "flex")) {
           document.body.style.overflow = "";
         }
