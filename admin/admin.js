@@ -1,6 +1,8 @@
 const $=id=>document.getElementById(id);
 const LOCAL_ADMIN_HOST = ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
-const API_BASE_URL=String(window.ADMIN_API_BASE_URL||(LOCAL_ADMIN_HOST?window.location.origin:"https://api.postlyfi.in")).replace(/\/$/,"");
+const NGROK_TUNNEL_HOST = /(^|\.)ngrok-free\.(dev|app)$/i.test(window.location.hostname);
+const USE_SAME_ORIGIN_API = LOCAL_ADMIN_HOST || NGROK_TUNNEL_HOST;
+const API_BASE_URL=String(window.ADMIN_API_BASE_URL||(USE_SAME_ORIGIN_API?window.location.origin:"https://api.postlyfi.in")).replace(/\/$/,"");
 let csrfToken="";
 let firebaseAuth=null;
 let firebaseInitPromise=null;
@@ -26,7 +28,7 @@ async function initFirebaseAuth(){
   return firebaseInitPromise;
 }
 
-if (!LOCAL_ADMIN_HOST) void initFirebaseAuth();
+if (!USE_SAME_ORIGIN_API) void initFirebaseAuth();
 let projects=[];
 let certificates=[];
 let sessionTimerHandle=null;
@@ -153,7 +155,7 @@ $("loginForm").addEventListener("submit",async e=>{
     const password=$("loginPassword").value;
     let d;
 
-    const auth=LOCAL_ADMIN_HOST ? null : await initFirebaseAuth();
+    const auth=USE_SAME_ORIGIN_API ? null : await initFirebaseAuth();
     if(auth){
       $("loginStatus").textContent="Authenticating with Firebase…";
       try{
