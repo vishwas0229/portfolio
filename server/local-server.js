@@ -122,16 +122,37 @@ async function handleStatic(req, res, url) {
     return;
   }
 
+  const isHtml = target.endsWith(".html");
+  const headers = {
+    "content-type": MIME[path.extname(target).toLowerCase()] || "application/octet-stream",
+    "x-content-type-options": "nosniff",
+    "x-frame-options": "DENY",
+    "referrer-policy": "strict-origin-when-cross-origin",
+    "cache-control": isHtml ? "no-store, no-cache, must-revalidate" : "public, max-age=3600"
+  };
+
+  if (target.endsWith(path.join("admin", "index.html"))) {
+    const rawCookies = req.headers.cookie || req.headers.Cookie || "";
+    const hasAdminSession = rawCookies.includes("portfolio_admin_session=");
+
+    let html = fs.readFileSync(target, "utf8");
+    if (!hasAdminSession) {
+      // Strip out internal administrative console DOM structure for unauthenticated requests
+      html = html.replace(/<section id="appView"[\s\S]*?<\/section>\s*<\/main>/, "</main>");
+    }
+
+    res.writeHead(200, headers);
+    res.end(html);
+    return;
+  }
+
   const stream = fs.createReadStream(target);
   stream.on("error", () => {
     res.writeHead(500, { "content-type": "text/plain; charset=utf-8" });
     res.end("Internal Server Error");
   });
 
-  res.writeHead(200, {
-    "content-type": MIME[path.extname(target).toLowerCase()] || "application/octet-stream",
-    "cache-control": target.endsWith(".html") ? "no-cache" : "public, max-age=3600"
-  });
+  res.writeHead(200, headers);
   stream.pipe(res);
 }
 
