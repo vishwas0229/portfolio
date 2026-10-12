@@ -4,13 +4,15 @@ const path = require("node:path");
 const { URL } = require("node:url");
 
 const ROOT = path.resolve(__dirname, "..");
-const FUNCTIONS = path.join(ROOT, "netlify", "functions");
+const FUNCTIONS = path.join(ROOT, "api", "functions");
 const PORT = Number(process.env.PORT || 8888);
 const HOST = process.env.HOST || "0.0.0.0";
 const MAX_BODY = 64 * 1024;
 
 const ROUTES = {
   health: "health",
+  github: "github",
+  leetcode: "leetcode",
   contact: "contact",
   analytics: "analytics",
   projects: "projects",
@@ -41,8 +43,11 @@ const MIME = {
 };
 
 function route(pathname) {
-  if (!pathname.startsWith("/api/")) return null;
-  let value = pathname.slice(5).replace(/^\/+|\/+$/g, "");
+  const apiPrefix = "/api/";
+  const legacyPrefix = "/.netlify/functions/";
+  const prefix = pathname.startsWith(apiPrefix) ? apiPrefix : pathname.startsWith(legacyPrefix) ? legacyPrefix : null;
+  if (!prefix) return null;
+  let value = pathname.slice(prefix.length).replace(/^\/+|\/+$/g, "");
   for (const [prefix, fn] of Object.entries(ROUTES)) {
     if (value === prefix || value.startsWith(prefix + "/")) {
       const rest = value.slice(prefix.length).replace(/^\/+/, "");
