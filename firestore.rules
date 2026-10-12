@@ -1,8 +1,6 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // All portfolio data is accessed through the trusted Cloud Run backend
-    // using the Firebase Admin SDK. Browser clients must not access collections directly.
     match /{document=**} {
       allow read, write: if false;
     }

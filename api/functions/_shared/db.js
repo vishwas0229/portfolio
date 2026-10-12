@@ -1,5 +1,4 @@
 const crypto = require("node:crypto");
-const mysql = require("mysql2/promise");
 const { config } = require("./config");
 
 const TABLE_COLUMNS = Object.freeze({
@@ -10,206 +9,167 @@ const TABLE_COLUMNS = Object.freeze({
   admins: ["id","email","password_hash","role","active","session_version","created_at","updated_at"]
 });
 
-const JSON_COLUMNS = new Set(["tech_stack","metadata"]);
-let pool;
+const JSON_COLUMNS = new Set(["tech_stack", "metadata"]);
+const NUMERIC_COLUMNS = new Set(["display_order", "session_version"]);
+const BOOLEAN_COLUMNS = new Set(["featured", "published", "active"]);
+let firestore;
 
-function getDatabaseUrl() {
-  const raw = String(process.env.DATABASE_URL || "").trim();
-  if (!raw) {
-    const error = new Error("DATABASE_URL is not configured");
-    error.code = "DB_NOT_CONFIGURED";
-    throw error;
-  }
-  const url = new URL(raw);
-  if (url.protocol !== "mysql:") {
-    const error = new Error("DATABASE_URL must use mysql://");
-    error.code = "DB_CONFIG_INVALID";
-    throw error;
-  }
-  return url;
-}
-
-function getPool() {
-  if (pool) return pool;
-  const url = getDatabaseUrl();
-  pool = mysql.createPool({
-    host: url.hostname,
-    port: Number(url.port || 3306),
-    user: decodeURIComponent(url.username),
-    password: decodeURIComponent(url.password),
-    database: decodeURIComponent(url.pathname.replace(/^\//, "")),
-    waitForConnections: true,
-    connectionLimit: Math.min(Math.max(Number(process.env.DB_POOL_MAX || 10), 1), 20),
-    queueLimit: 0,
-    connectTimeout: 10000,
-    enableKeepAlive: true
+function getFirestore() {
+  if (firestore) return firestore;
+  const { getApps, initializeApp } = require("firebase-admin/app");
+  const { getFirestore: createFirestore } = require("firebase-admin/firestore");
+  const app = getApps()[0] || initializeApp({
+    projectId: process.env.GOOGLE_CLOUD_PROJECT || process.env.GCLOUD_PROJECT || "portfolio-562da"
   });
-  return pool;
+  firestore = createFirestore(app);
+  return firestore;
 }
 
 function assertTable(table) {
-  if (!Object.hasOwn(TABLE_COLUMNS, table)) throw new Error("Unsupported database table");
+  if (!Object.hasOwn(TABLE_COLUMNS, table)) throw new Error("Unsupported collection");
 }
 
 function parseQuery(table, query = "") {
   assertTable(table);
   const allowed = new Set(TABLE_COLUMNS[table]);
   const params = new URLSearchParams(String(query || "").replace(/^\?/, ""));
-
   const requested = params.get("select") || "*";
   const columns = (requested === "*" ? TABLE_COLUMNS[table] : requested.split(","))
-    .map(v => v.trim())
-    .filter(v => /^[A-Za-z_][A-Za-z0-9_]*$/.test(v) && allowed.has(v));
-
+    .map(value => value.trim())
+    .filter(value => /^[A-Za-z_][A-Za-z0-9_]*$/.test(value) && allowed.has(value));
   if (!columns.length) throw new Error("Invalid select list");
 
-  const clauses = [];
-  const values = [];
-
-  for (const [column, raw] of params.entries()) {
-    if (column === "select" || column === "order" || column === "limit") continue;
-    if (!allowed.has(column)) throw new Error("Unsupported query filter");
-
+  const filters = [];
+  for (const [field, raw] of params.entries()) {
+    if (["select", "order", "limit"].includes(field)) continue;
+    if (!allowed.has(field)) throw new Error("Unsupported query filter");
     const separator = raw.indexOf(".");
     if (separator < 1) throw new Error("Invalid query filter");
-
     const operator = raw.slice(0, separator);
-    const operand = raw.slice(separator + 1);
-
-    if (operator === "is" && operand === "null") {
-      clauses.push(column + " IS NULL");
+    let value = raw.slice(separator + 1);
+    if (operator === "is" && value === "null") {
+      filters.push({ field, operator: "==", value: null });
       continue;
     }
-
-    const sqlOperator = ({eq:"=",neq:"<>",gt:">",gte:">=",lt:"<",lte:"<="})[operator];
-    if (!sqlOperator) throw new Error("Unsupported query operator");
-
-    let value = operand;
-    if (value === "true") value = 1;
-    else if (value === "false") value = 0;
+    const firestoreOperator = ({ eq: "==", neq: "!=", gt: ">", gte: ">=", lt: "<", lte: "<=" })[operator];
+    if (!firestoreOperator) throw new Error("Unsupported query operator");
+    if (value === "true") value = true;
+    else if (value === "false") value = false;
     else if (value === "null") value = null;
-
-    if (value === null) {
-      clauses.push(column + (operator === "eq" ? " IS NULL" : " IS NOT NULL"));
-    } else {
-      values.push(value);
-      clauses.push(column + " " + sqlOperator + " ?");
-    }
+    else if (NUMERIC_COLUMNS.has(field) && value !== "" && Number.isFinite(Number(value))) value = Number(value);
+    else if (BOOLEAN_COLUMNS.has(field) && (value === "1" || value === "0")) value = value === "1";
+    filters.push({ field, operator: firestoreOperator, value });
   }
 
-  let orderSql = "";
+  const orderBy = [];
   const orderParam = params.get("order");
   if (orderParam) {
-    const pieces = orderParam.split(",").filter(Boolean).map(item => {
-      const [column, direction = "asc"] = item.trim().split(".");
-      if (!allowed.has(column) || !["asc","desc"].includes(direction)) throw new Error("Unsupported order");
-      return column + " " + direction.toUpperCase();
-    });
-    orderSql = pieces.length ? " ORDER BY " + pieces.join(", ") : "";
-  }
-
-  let limitSql = "";
-  if (params.has("limit")) {
-    const n = Number(params.get("limit"));
-    if (!Number.isInteger(n) || n < 1 || n > 1000) throw new Error("Invalid limit");
-    limitSql = " LIMIT " + n;
-  }
-
-  return {
-    selectSql: columns.join(", "),
-    whereSql: clauses.length ? " WHERE " + clauses.join(" AND ") : "",
-    orderSql,
-    limitSql,
-    values
-  };
-}
-
-function hydrateRows(rows) {
-  return rows.map(row => {
-    const out = { ...row };
-    for (const column of JSON_COLUMNS) {
-      if (typeof out[column] === "string") {
-        try { out[column] = JSON.parse(out[column]); } catch (_) {}
-      }
+    for (const item of orderParam.split(",").filter(Boolean)) {
+      const [field, direction = "asc"] = item.trim().split(".");
+      if (!allowed.has(field) || !["asc", "desc"].includes(direction)) throw new Error("Unsupported order");
+      orderBy.push({ field, direction });
     }
-    return out;
-  });
+  }
+
+  let limit = null;
+  if (params.has("limit")) {
+    limit = Number(params.get("limit"));
+    if (!Number.isInteger(limit) || limit < 1 || limit > 1000) throw new Error("Invalid limit");
+  }
+  return { columns, filters, orderBy, limit };
 }
 
-function prepareRecord(table, row) {
+function hydrateRow(data, columns) {
+  const output = {};
+  for (const column of columns) {
+    if (data[column] !== undefined) output[column] = data[column];
+  }
+  for (const column of JSON_COLUMNS) {
+    if (typeof output[column] === "string") {
+      try { output[column] = JSON.parse(output[column]); } catch (_) {}
+    }
+  }
+  return output;
+}
+
+function prepareRecord(table, row = {}) {
   assertTable(table);
   const allowed = new Set(TABLE_COLUMNS[table]);
-  const out = {};
-  if (["projects","certificates","contact_messages"].includes(table) && !row.id) {
-    out.id = crypto.randomUUID();
-  }
-  for (const [key, value] of Object.entries(row || {})) {
-    if (!allowed.has(key)) continue;
-    out[key] = JSON_COLUMNS.has(key)
-      ? JSON.stringify(value == null ? (key === "metadata" ? {} : []) : value)
+  const output = {};
+  for (const [key, value] of Object.entries(row)) {
+    if (!allowed.has(key) || value === undefined) continue;
+    output[key] = JSON_COLUMNS.has(key) && typeof value === "string"
+      ? (() => { try { return JSON.parse(value); } catch (_) { return value; } })()
       : value;
   }
-  return out;
+  if (!output.id) output.id = crypto.randomUUID();
+  const now = new Date().toISOString();
+  if (["projects", "certificates", "contact_messages", "analytics_events"].includes(table) && !output.created_at) output.created_at = now;
+  if (["projects", "certificates"].includes(table) && !output.updated_at) output.updated_at = now;
+  if (table === "analytics_events" && !output.event_date) output.event_date = now.slice(0, 10);
+  if (table === "admins" && output.session_version === undefined) output.session_version = 1;
+  return output;
+}
+
+function applyQuery(collection, parsed) {
+  let query = collection;
+  for (const filter of parsed.filters) query = query.where(filter.field, filter.operator, filter.value);
+  for (const order of parsed.orderBy) query = query.orderBy(order.field, order.direction);
+  if (parsed.limit) query = query.limit(parsed.limit);
+  return query;
 }
 
 async function ping() {
-  await getPool().query("SELECT 1 AS ok");
+  await getFirestore().collection("_health").limit(1).get();
   return true;
 }
 
 async function list(table, query = "") {
   const parsed = parseQuery(table, query);
-  const sql = "SELECT " + parsed.selectSql + " FROM " + table + parsed.whereSql + parsed.orderSql + parsed.limitSql;
-  const [rows] = await getPool().query(sql, parsed.values);
-  return hydrateRows(rows);
+  const snapshot = await applyQuery(getFirestore().collection(table), parsed).get();
+  return snapshot.docs.map(doc => hydrateRow({ ...doc.data(), id: doc.data().id || doc.id }, parsed.columns));
 }
 
 async function insert(table, records) {
-  const rows = (Array.isArray(records) ? records : [records]).map(row => prepareRecord(table, row));
-  if (!rows.length) return [];
-
-  const columns = [...new Set(rows.flatMap(row => Object.keys(row)))];
-  const values = [];
-  const tuples = rows.map(row => "(" + columns.map(column => {
-    values.push(row[column] === undefined ? null : row[column]);
-    return "?";
-  }).join(", ") + ")");
-
-  const sql = "INSERT INTO " + table + " (" + columns.join(", ") + ") VALUES " + tuples.join(", ");
-  const [result] = await getPool().query(sql, values);
-
-  if (!result.affectedRows) return [];
-  if (rows.length === 1 && rows[0].id) {
-    return list(table, "?select=*&id=eq." + encodeURIComponent(rows[0].id) + "&limit=1");
+  const input = Array.isArray(records) ? records : [records];
+  if (!input.length) return [];
+  const db = getFirestore();
+  const prepared = input.map(row => prepareRecord(table, row));
+  const batch = db.batch();
+  for (const row of prepared) batch.set(db.collection(table).doc(String(row.id)), row);
+  await batch.commit();
+  if (prepared.length === 1) {
+    const saved = await db.collection(table).doc(String(prepared[0].id)).get();
+    return [hydrateRow({ ...saved.data(), id: saved.id }, TABLE_COLUMNS[table])];
   }
-  return list(table, "?select=*&limit=" + Math.min(rows.length, 1000) + "&order=created_at.desc");
+  return list(table, "?select=*&limit=" + Math.min(prepared.length, 1000));
 }
 
 async function update(table, query, patch) {
   const parsed = parseQuery(table, query);
   const prepared = prepareRecord(table, patch);
-  const columns = Object.keys(prepared);
-  if (!columns.length) throw new Error("No valid columns to update");
-
-  const setSql = columns.map(column => column + " = ?").join(", ");
-  const values = columns.map(column => prepared[column]);
-  const [result] = await getPool().query(
-    "UPDATE " + table + " SET " + setSql + parsed.whereSql + parsed.limitSql,
-    values.concat(parsed.values)
-  );
-
-  if (!result.affectedRows) return [];
-  const selectQuery = query.replace(/(^\?|&)select=[^&]*/g, "").replace(/^&/, "?select=*");
-  return list(table, selectQuery.startsWith("?") ? selectQuery : "?" + selectQuery);
+  delete prepared.id;
+  delete prepared.created_at;
+  if (!Object.keys(prepared).length) throw new Error("No valid columns to update");
+  const db = getFirestore();
+  const snapshot = await applyQuery(db.collection(table), { ...parsed, columns: TABLE_COLUMNS[table] }).get();
+  if (snapshot.empty) return [];
+  const batch = db.batch();
+  for (const doc of snapshot.docs) batch.update(doc.ref, { ...prepared, updated_at: new Date().toISOString() });
+  await batch.commit();
+  const updated = await Promise.all(snapshot.docs.map(doc => doc.ref.get()));
+  return updated.map(doc => hydrateRow({ ...doc.data(), id: doc.id }, parsed.columns));
 }
 
 async function remove(table, query) {
   const parsed = parseQuery(table, query);
-  const [result] = await getPool().query(
-    "DELETE FROM " + table + parsed.whereSql,
-    parsed.values
-  );
-  return [{ affectedRows: result.affectedRows }];
+  const db = getFirestore();
+  const snapshot = await applyQuery(db.collection(table), { ...parsed, columns: TABLE_COLUMNS[table] }).get();
+  if (snapshot.empty) return [{ affectedRows: 0 }];
+  const batch = db.batch();
+  for (const doc of snapshot.docs) batch.delete(doc.ref);
+  await batch.commit();
+  return [{ affectedRows: snapshot.size }];
 }
 
-module.exports = { config, ping, list, insert, update, remove, getDatabaseUrl, parseQuery };
+module.exports = { config, ping, list, insert, update, remove, parseQuery, prepareRecord };

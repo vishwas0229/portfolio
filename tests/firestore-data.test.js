@@ -13,12 +13,12 @@ test("Firestore query parser maps filters, ordering and limits", () => {
   assert.equal(parsed.limit, 10);
 });
 
-test("Firestore query parser rejects unknown collection and fields", () => {
+test("Firestore query parser rejects unknown collections and fields", () => {
   assert.throws(() => parseQuery("secrets", ""), /Unsupported collection/);
   assert.throws(() => parseQuery("projects", "?unknown=eq.value"), /Unsupported query filter/);
 });
 
-test("Firestore records are assigned an id and structured JSON stays structured", () => {
+test("Firestore records receive IDs, timestamps, and structured JSON", () => {
   const row = prepareRecord("projects", { title: "Demo", tech_stack: ["Node", "Firestore"] });
   assert.ok(row.id);
   assert.deepEqual(row.tech_stack, ["Node", "Firestore"]);
