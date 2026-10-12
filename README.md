@@ -104,33 +104,22 @@ If you like this project, consider giving it a ⭐ on GitHub!
 
 ## Backend
 
-The portfolio now includes a serverless Node.js backend on Netlify Functions.
+The production API runs as Netlify Functions. Firebase Authentication handles admin email/password sign-in, and Cloud Firestore stores projects, certificates, contact messages, analytics, and the admin allowlist.
 
 ### API
-- `GET /api/health` — lightweight API health
-- `GET /api/health?deep=1` — API + MySQL connectivity/readiness check
+- `GET /api/health` — API health
+- `GET /api/health?deep=1` — API and Firestore readiness
 - `GET /api/projects` — published projects
 - `GET /api/certificates` — published certificates
-- `POST /api/contact` — validated contact submission with database persistence; messages are shown in the authenticated Admin Console
+- `POST /api/contact` — validated contact submission stored in Firestore
 - `POST /api/analytics` — privacy-conscious event ingestion
-- `/api/admin/*` — authenticated admin operations for messages, projects, certificates, analytics and account settings
+- `/api/admin/*` — authenticated admin operations
 
-### Data & security
+### Admin login and database setup
 
-MySQL is used for persistent backend data. The database connection is server-side only.
+Follow [Firebase Admin Login and Firestore Setup](docs/firebase-admin-setup.md) to enable Email/Password sign-in, add the admin allowlist document, and configure the private Firebase Admin service-account secret on Netlify.
 
-Admin accounts are stored in the MySQL `admins` table. The login API loads the account by email, verifies the PBKDF2 password hash, and creates a signed HttpOnly session plus a CSRF token. Admin profile credentials are not stored in `.env`.
-
-Public write endpoints use input validation, honeypot support and rate limiting. Projects, certificates, contact messages and analytics are also stored in MySQL.
-
-Database setup files:
-- `docs/mysql.sql`
-- `docs/mysql-seed.sql`
-
-Admin console: `/admin/`
-
-The **Account** tab lets the signed-in admin change the email/password stored in MySQL. The current password is required for every credential change, the new password is stored only as a PBKDF2 hash, and older sessions are invalidated.
-
+The Firestore rules deny direct client reads and writes. The backend uses the Firebase Admin SDK, verifies Firebase ID tokens, checks the matching active admin document, and issues an HttpOnly session cookie. Admin passwords are managed by Firebase Authentication.
 
 ## 🐳 Docker — Local Full Stack
 

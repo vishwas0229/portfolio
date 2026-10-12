@@ -56,7 +56,7 @@ async function api(path,options={}){
     return data;
   }catch(error){
     if(error?.name==="AbortError"){
-      const timeoutError=new Error("Request timed out. Check that the Docker app and MySQL database are running.");
+      const timeoutError=new Error("Request timed out. Check that the API and Firestore are available.");
       timeoutError.status=408;
       throw timeoutError;
     }
@@ -156,6 +156,9 @@ $("loginForm").addEventListener("submit",async e=>{
     let d;
 
     const auth=USE_SAME_ORIGIN_API ? null : await initFirebaseAuth();
+    if(!auth&&!USE_SAME_ORIGIN_API){
+      throw new Error("Firebase Authentication could not start. Check that the admin page is hosted by Firebase Hosting and the Firebase web app is configured.");
+    }
     if(auth){
       $("loginStatus").textContent="Authenticating with Firebase…";
       try{
@@ -252,30 +255,24 @@ $("refreshAnalytics").addEventListener("click",loadAnalytics);
 $("analyticsDays").addEventListener("change",loadAnalytics);
 loadSession();
 
-$("accountForm").addEventListener("submit",async e=>{
-  e.preventDefault();
-  $("accountStatus").textContent="Updating account…";
-  const newPassword=$("newPassword").value;
-  const confirmPassword=$("confirmPassword").value;
-  if(newPassword && newPassword!==confirmPassword){
-    $("accountStatus").textContent="New passwords do not match.";
+$("accountResetBtn").addEventListener("click",async()=>{
+  const email=$("accountEmail").value.trim();
+  const auth=await initFirebaseAuth();
+  if(!auth){
+    $("accountStatus").textContent="Firebase Authentication is unavailable. Check Firebase Hosting configuration.";
     return;
   }
+  $("accountResetBtn").disabled=true;
+  $("accountStatus").textContent="Sending password reset email…";
   try{
-    const d=await api("/api/admin/account",{method:"PATCH",csrf:true,body:JSON.stringify({
-      email:$("accountEmail").value,
-      currentPassword:$("currentPassword").value,
-      newPassword:newPassword
-    })});
-    if(d.csrfToken)csrfToken=d.csrfToken;
-    if(d.data)showApp(d.data);
-    if(d.expiresIn)startSessionTimer(Date.now()+Number(d.expiresIn)*1000);
-    $("currentPassword").value="";
-    $("newPassword").value="";
-    $("confirmPassword").value="";
-    $("accountStatus").textContent="Account updated successfully.";
+    await auth.sendPasswordResetEmail(email);
+    $("accountStatus").textContent="Password reset email sent to "+email+".";
   }catch(err){
-    $("accountStatus").textContent=err.message;
+    $("accountStatus").textContent=err.code==="auth/too-many-requests"
+      ?"Too many requests. Please wait and try again."
+      :"Could not send the reset email. Check Firebase Authentication email settings.";
+  }finally{
+    $("accountResetBtn").disabled=false;
   }
 });
 

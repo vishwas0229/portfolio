@@ -16,12 +16,9 @@ let firestore;
 
 function getFirestore() {
   if (firestore) return firestore;
-  const { getApps, initializeApp } = require("firebase-admin/app");
   const { getFirestore: createFirestore } = require("firebase-admin/firestore");
-  const app = getApps()[0] || initializeApp({
-    projectId: process.env.GOOGLE_CLOUD_PROJECT || process.env.GCLOUD_PROJECT || "portfolio-562da"
-  });
-  firestore = createFirestore(app);
+  const { getFirebaseAdminApp } = require("./firebase-admin");
+  firestore = createFirestore(getFirebaseAdminApp());
   return firestore;
 }
 
