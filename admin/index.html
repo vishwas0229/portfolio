@@ -29,7 +29,7 @@
           <h2>Keep your portfolio<br><em>under control.</em></h2>
           <p>Manage content, messages, certificates and analytics from one secure workspace.</p>
           <div class="auth-points">
-            <span><i></i> MySQL-backed content</span>
+            <span><i></i> Firebase Authentication</span>
             <span><i></i> Secure admin sessions</span>
             <span><i></i> Docker-ready workflow</span>
           </div>
@@ -87,7 +87,7 @@
           <div class="workspace-icon">R</div>
           <div>
             <strong>Portfolio Admin</strong>
-            <span>MySQL workspace</span>
+            <span>Firestore workspace</span>
           </div>
           <span class="live-dot" title="System online"></span>
         </div>
@@ -169,7 +169,7 @@
 
           <section id="messagesTab" class="tab-panel">
             <div class="section-head">
-              <div><h2>Messages</h2><p class="muted">Contact submissions stored in your MySQL backend.</p></div>
+              <div><h2>Messages</h2><p class="muted">Contact submissions stored in Firestore.</p></div>
               <button id="refreshMessages" class="secondary-btn" type="button"><span>↻</span> Refresh</button>
             </div>
             <div id="messagesList" class="stack"><div class="loading-card"><div class="spinner"></div><span>Loading messages…</span></div></div>
@@ -244,38 +244,33 @@
 
           <section id="accountTab" class="tab-panel" hidden>
             <div class="section-head">
-              <div><h2>Account</h2><p class="muted">Update the administrator credentials stored in MySQL.</p></div>
-              <span class="secure-badge"><span></span> DB-backed</span>
+              <div><h2>Account</h2><p class="muted">Your sign-in is managed by Firebase Authentication.</p></div>
+              <span class="secure-badge"><span></span> Firebase Auth</span>
             </div>
             <div class="account-layout">
               <div class="panel account-intro">
                 <div class="account-avatar">A</div>
                 <span class="heading-kicker">ADMINISTRATOR</span>
                 <h3>Account security</h3>
-                <p class="muted">Credential changes are stored in MySQL and invalidate older admin sessions.</p>
+                <p class="muted">Firebase Authentication verifies your email and password. Firestore stores the admin allowlist.</p>
                 <div class="account-rule"></div>
-                <div class="account-note"><span>✓</span> Passwords are stored as secure hashes.</div>
-                <div class="account-note"><span>✓</span> Session versioning protects old sessions.</div>
+                <div class="account-note"><span>✓</span> Passwords stay in Firebase Authentication.</div>
+                <div class="account-note"><span>✓</span> Only active admins can open this workspace.</div>
               </div>
               <div class="panel form-panel account-form-panel">
-                <div class="form-panel-head"><div><span class="heading-kicker">CREDENTIALS</span><h3>Update account</h3></div><span class="form-dot"></span></div>
-                <form id="accountForm">
-                  <div class="form-grid">
-                    <label class="wide">Admin email<input id="accountEmail" type="email" autocomplete="username" required maxlength="160" placeholder="admin@localhost"></label>
-                    <label class="wide">Current password<input id="currentPassword" type="password" autocomplete="current-password" required maxlength="200" placeholder="Confirm current password"></label>
-                    <label>New password<input id="newPassword" type="password" autocomplete="new-password" minlength="12" maxlength="200" placeholder="Minimum 12 characters"></label>
-                    <label>Confirm new password<input id="confirmPassword" type="password" autocomplete="new-password" minlength="12" maxlength="200" placeholder="Repeat new password"></label>
-                  </div>
-                  <p class="form-help">Changing the email or password signs out other existing admin sessions.</p>
-                  <div class="actions"><button type="submit" class="primary">Update account</button></div>
-                  <p id="accountStatus" class="status" role="status"></p>
-                </form>
+                <div class="form-panel-head"><div><span class="heading-kicker">CREDENTIALS</span><h3>Firebase account</h3></div><span class="form-dot"></span></div>
+                <div class="form-grid">
+                  <label class="wide">Admin email<input id="accountEmail" type="email" readonly></label>
+                </div>
+                <p class="form-help">Change your password through the reset email. To change the admin email, update Firebase Authentication and the matching Firestore admins document.</p>
+                <div class="actions"><button id="accountResetBtn" type="button" class="primary">Send password reset email</button></div>
+                <p id="accountStatus" class="status" role="status" aria-live="polite"></p>
               </div>
             </div>
           </section>
 
           <footer class="dashboard-footer">
-            <span>Rahul Portfolio Admin</span><span>Secure workspace · MySQL</span>
+            <span>Rahul Portfolio Admin</span><span>Secure workspace · Firebase Auth + Firestore</span>
           </footer>
         </div>
       </div>
