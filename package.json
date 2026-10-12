@@ -12,6 +12,7 @@
   "scripts": {
     "test": "node --test tests/*.test.js",
     "start": "node server/local-server.js",
-    "start:docker": "node server/local-server.js"
+    "start:docker": "node server/local-server.js",
+    "migrate:firestore": "node scripts/migrate-mysql-to-firestore.js"
   }
 }
