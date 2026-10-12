@@ -38,6 +38,7 @@ services:
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
       GITHUB_USERNAME: vishwas0229
       LEETCODE_USERNAME: vishwas0229
+      PORTFOLIO_BACKEND_RUNTIME: netlify
       DATABASE_URL: mysql://${MYSQL_USER:-portfolio}:${MYSQL_PASSWORD:-portfolio_dev}@db:3306/${MYSQL_DATABASE:-portfolio}
       DB_POOL_MAX: "10"
       GITHUB_CACHE_TTL_SECONDS: "300"

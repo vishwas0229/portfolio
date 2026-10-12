@@ -12,8 +12,12 @@ Collections preserve the existing logical table names: `projects`, `certificates
 2. Configure Firestore security rules to deny direct client access to private collections. The Cloud Run service uses Admin SDK and IAM, not client rules.
 3. Grant the Cloud Run runtime service account the minimum Firestore access it needs.
 4. Build and deploy the API to Cloud Run. It listens on `process.env.PORT`.
-5. Verify `/api/health`, projects, certificates, contact, analytics and admin authentication before routing the public site to it.
-6. Add Firebase Hosting rewrites only after the Cloud Run URL is available and tested.
+5. Verify the candidate service before changing Hosting rewrites or production traffic:
+   ```bash
+   PORTFOLIO_API_URL=https://YOUR_CLOUD_RUN_SERVICE_URL npm run verify:cloud-run
+   ```
+   This read-only check verifies deep Firestore health and the public projects and certificates API responses. It does not submit contact messages or analytics, sign in, or write data.
+6. Add Firebase Hosting rewrites only after the Cloud Run URL is available and the read-only checks pass.
 7. Remove Netlify references/files only after production verification.
 
 ## Important

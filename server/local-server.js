@@ -4,7 +4,8 @@ const path = require("node:path");
 const { URL } = require("node:url");
 
 const ROOT = path.resolve(__dirname, "..");
-const FUNCTIONS = path.join(ROOT, "api", "functions");
+const BACKEND_RUNTIME = process.env.PORTFOLIO_BACKEND_RUNTIME === "netlify" ? "netlify" : "api";
+const FUNCTIONS = path.join(ROOT, BACKEND_RUNTIME, "functions");
 const PORT = Number(process.env.PORT || 8888);
 const HOST = process.env.HOST || "0.0.0.0";
 const MAX_BODY = 64 * 1024;
