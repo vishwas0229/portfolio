@@ -34,7 +34,9 @@ test("fails when Firestore health is degraded", async () => {
 test("fails on malformed public collection responses", async () => {
   await withServer((req, res) => {
     res.setHeader("content-type", "application/json");
-    res.end(JSON.stringify({ ok: true, data: {} }));
+    res.end(JSON.stringify(req.url === "/api/health?deep=1"
+      ? { ok: true, status: "healthy", database: "up" }
+      : { ok: true, data: {} }));
   }, baseUrl => assert.rejects(verifyBackend(baseUrl, fetch), /public projects check failed/));
 });
 
